@@ -236,6 +236,7 @@
     <string name="install_component">Установить компонент</string>
     <string name="open_android_browser_from_wine">Откройте браузер Android из Wine</string>
     <string name="use_android_clipboard_on_Wine">Использование буфера обмена Android в Wine</string>
+    <string name="enable_background_service">Включить фоновую службу</string>
     <string name="capture_pointer_on_external_mouse">Захват указателя на внешней мыши</string>
     <string name="there_are_no_items_to_download">Нет элементов для загрузки.</string>
     <string name="enable_direct_rendering">Включить прямой рендеринг</string>
@@ -289,4 +290,8 @@
     <string name="simple_fps">Простой (FPS)</string>
     <string name="full">Полный</string>
     <string name="renderer">Рендерер</string>
+    <string name="keep_alive_service_notification_channel_desc">Поддерживает работу Winlator в фоновом режиме, чтобы приостановленная сессия Wine не прерывалась управлением фоновыми процессами Android.</string>
+    <string name="keep_alive_service_notification_content_container_p">Сессия контейнера приостановлена в фоновом режиме</string>
+    <string name="keep_alive_service_notification_content_container_r">В фоновом режиме выполняется сессия контейнера</string>
+    <string name="keep_alive_service_notification_content_else">Winlator работает в фоновом режиме</string>
 </resources>

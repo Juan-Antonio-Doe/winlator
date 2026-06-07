@@ -292,6 +292,7 @@
     <string name="install_component">Install Component</string>
     <string name="open_android_browser_from_wine">Open Android Browser from Wine</string>
     <string name="use_android_clipboard_on_Wine">Use Android Clipboard on Wine</string>
+    <string name="enable_background_service">Enable Background Service</string>
     <string name="capture_pointer_on_external_mouse">Capture pointer on external mouse</string>
     <string name="there_are_no_items_to_download">There are no items to download</string>
     <string name="enable_direct_rendering">Enable direct rendering</string>
@@ -347,4 +348,8 @@
     <string name="full">Full</string>
     <string name="ddraw_wrapper" translatable="false">DDraw Wrapper</string>
     <string name="renderer">Renderer</string>
+    <string name="keep_alive_service_notification_channel_desc">Keeps Winlator running in the background so a paused wine session is not interrupted by Android\'s background process management.</string>
+    <string name="keep_alive_service_notification_content_container_p">Container session is paused in the background</string>
+    <string name="keep_alive_service_notification_content_container_r">There is a container session running in the background</string>
+    <string name="keep_alive_service_notification_content_else">Winlator is running in the background</string>
 </resources>

@@ -21,6 +21,12 @@ import android.widget.RadioGroup;
 import android.widget.Spinner;
 import android.widget.TextView;
 
+import android.Manifest;
+import android.content.pm.PackageManager;
+import android.os.Build;
+import androidx.core.content.ContextCompat;
+import android.app.NotificationManager;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
@@ -138,6 +144,24 @@ public class SettingsFragment extends Fragment {
         final CheckBox cbUseAndroidClipboardOnWine = view.findViewById(R.id.CBUseAndroidClipboardOnWine);
         cbUseAndroidClipboardOnWine.setChecked(preferences.getBoolean("use_android_clipboard_on_wine", false));
 
+        final CheckBox cbEnableBackgroundService = view.findViewById(R.id.CBEnableBackgroundService);
+        cbEnableBackgroundService.setChecked(preferences.getBoolean("enable_background_service", false));
+        cbEnableBackgroundService.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            if (isChecked && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                if (ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+                    // We force a temporary notification so that the notification permission request window appears on APIs 33+
+                    String tempId = "permission_trigger";
+                    AppUtils.createNotificationChannel(context, tempId, "Permission Trigger", NotificationManager.IMPORTANCE_LOW);
+
+                    // And delete the channel after 1 second.
+                    new Handler(Looper.getMainLooper()).postDelayed(() -> {
+                        NotificationManager nm = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+                        if (nm != null) nm.deleteNotificationChannel(tempId);
+                    }, 1000);
+                }
+            }
+        });
+
         final CheckBox cbEnableWineDebug = view.findViewById(R.id.CBEnableWineDebug);
         cbEnableWineDebug.setChecked(preferences.getBoolean("enable_wine_debug", false));
 
@@ -202,6 +226,7 @@ public class SettingsFragment extends Fragment {
             editor.putInt("preferred_input_api", sPreferredInputApi.getSelectedItemPosition());
             editor.putBoolean("open_android_browser_from_wine", cbOpenAndroidBrowserFromWine.isChecked());
             editor.putBoolean("use_android_clipboard_on_wine", cbUseAndroidClipboardOnWine.isChecked());
+            editor.putBoolean("enable_background_service", cbEnableBackgroundService.isChecked());
             putGamepadPlayerConfigs(view, editor);
 
             int newAppThemeId = rgAppTheme.getCheckedRadioButtonId();

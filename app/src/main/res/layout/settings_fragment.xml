@@ -292,6 +292,13 @@
                         android:layout_height="wrap_content"
                         android:text="@string/use_android_clipboard_on_Wine"
                         android:layout_marginTop="8dp" />
+
+                    <CheckBox
+                        android:id="@+id/CBEnableBackgroundService"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/enable_background_service"
+                        android:layout_marginTop="8dp" />
                 </LinearLayout>
 
                 <TextView

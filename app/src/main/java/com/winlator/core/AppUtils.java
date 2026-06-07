@@ -1,6 +1,8 @@
 package com.winlator.core;
 
 import android.app.Activity;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -384,5 +386,47 @@ public abstract class AppUtils {
         else if (appTheme == SettingsFragment.APP_THEME_DARK) {
             activity.setTheme(R.style.AppThemeDark);
         }
+    }
+
+    /**
+     * Create a notification channel.
+     * @param context The context of the app.
+     * @param channelId Unique channel identifier.
+     * @param name Visible channel name for the user.
+     * @param importance Importance level (e.g., NotificationManager.IMPORTANCE_LOW).
+     * @param desc Channel description (optional).
+     */
+    public static void createNotificationChannel(Context context, String channelId, String name, int importance, String desc) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            NotificationManager nm = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+            if (nm != null && nm.getNotificationChannel(channelId) == null) {
+                NotificationChannel channel = new NotificationChannel(channelId, name, importance);
+
+                if (!desc.isEmpty())
+                    channel.setDescription("");
+                nm.createNotificationChannel(channel);
+            }
+        }
+    }
+
+    /**
+     * Overload of {@link #createNotificationChannel(Context, String, String, int, String)}
+     * without description.
+     */
+    public static void createNotificationChannel(Context context, String channelId, String name, int importance) {
+        createNotificationChannel(context, channelId, name, importance, "");
+    }
+
+    /**
+     * Generate a unique ID based on the package name and the given string
+     * to avoid conflicts with other forks/flavors.
+     * @param context The context of the app for get the package name.
+     * @param notificationIDName A string that identifies the notification and is used
+     *                           to generate a unique ID.
+     * @return A unique integer identifier.
+     */
+    public static int generateNotificationId(Context context, String notificationIDName) {
+        String contextKey = context.getPackageName() + notificationIDName;
+        return contextKey.hashCode() & 0x7FFFFFFF; // Avoid negative IDs
     }
 }

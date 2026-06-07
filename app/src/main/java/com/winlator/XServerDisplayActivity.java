@@ -66,6 +66,7 @@ import com.winlator.inputcontrols.ExternalController;
 import com.winlator.inputcontrols.InputControlsManager;
 import com.winlator.math.Mathf;
 import com.winlator.renderer.GLRenderer;
+import com.winlator.services.KeepAliveService;
 import com.winlator.widget.FrameRating;
 import com.winlator.widget.InputControlsView;
 import com.winlator.widget.MagnifierView;
@@ -237,6 +238,8 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
 
         preloaderDialog.show(R.string.starting_up);
 
+        KeepAliveService.startSession(this);
+
         inputControlsManager = new InputControlsManager(this);
         xServer = new XServer(this, screenInfo);
         xServer.setWinHandler(winHandler);
@@ -318,24 +321,27 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
     public void onResume() {
         super.onResume();
         if (environment != null) {
+            KeepAliveService.onResumeSession(this);
             xServerView.onResume();
             environment.onResume();
         }
     }
 
     @Override
-    public void onPause() {
+        public void onPause() {
         super.onPause();
         if (environment != null && !isInPictureInPictureMode()) {
             environment.onPause();
             xServerView.onPause();
         }
+        KeepAliveService.onPauseSession(this);
     }
 
     @Override
     protected void onDestroy() {
         winHandler.stop();
         if (environment != null) environment.stopEnvironmentComponents();
+        KeepAliveService.stopSession(this);
         super.onDestroy();
     }
 
@@ -431,6 +437,7 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
             AppUtils.restartApplication(this, options);
         }
         else AppUtils.restartApplication(this);
+        KeepAliveService.stopSession(this);
     }
 
     private void setupWineSystemFiles() {

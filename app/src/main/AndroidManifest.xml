@@ -11,6 +11,11 @@
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
     <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS"/>
     <uses-permission android:name="android.permission.VIBRATE"/>
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+
 
     <application
         android:icon="@mipmap/ic_launcher"
@@ -48,6 +53,19 @@
             android:theme="@style/AppThemeDark"
             android:exported="false"
             android:screenOrientation="sensor" />
+
+        <!-- Needed for keep the container alive when in background or the device is locked. -->
+        <service
+            android:name="com.winlator.services.KeepAliveService"
+            android:enabled="true"
+            android:exported="false"
+            android:foregroundServiceType="specialUse"
+            android:stopWithTask="false">
+
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="Required to prevent the container in background from being killed by the OS."/>
+        </service>
 
         <provider
             android:name="androidx.core.content.FileProvider"

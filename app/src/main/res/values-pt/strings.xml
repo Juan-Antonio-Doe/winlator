@@ -236,6 +236,7 @@
     <string name="install_component">Instalar Componente</string>
     <string name="open_android_browser_from_wine">Abrir o navegador Android pelo Wine</string>
     <string name="use_android_clipboard_on_Wine">Usar a área de transferência do Android no Wine</string>
+    <string name="enable_background_service">Ativar serviço em segundo plano</string>
     <string name="capture_pointer_on_external_mouse">Capturar ponteiro em mouse externo</string>
     <string name="there_are_no_items_to_download">Não há itens para baixar</string>
     <string name="enable_direct_rendering">Habilitar renderização direta</string>
@@ -289,4 +290,8 @@
     <string name="simple_fps">Simples (FPS)</string>
     <string name="full">Completo</string>
     <string name="renderer">Renderizador</string>
+    <string name="keep_alive_service_notification_channel_desc">Mantém o Winlator em execução em segundo plano para que uma sessão do Wine pausada não seja interrompida pelo gerenciamento de processos em segundo plano do Android.</string>
+    <string name="keep_alive_service_notification_content_container_p">A sessão do contentor está pausada em segundo plano</string>
+    <string name="keep_alive_service_notification_content_container_r">Há uma sessão de contêiner em execução em segundo plano</string>
+    <string name="keep_alive_service_notification_content_else">O Winlator está a executar-se em segundo plano</string>
 </resources>
