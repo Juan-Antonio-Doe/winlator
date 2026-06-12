@@ -26,7 +26,7 @@ public class WinHandler {
     private static final short CLIENT_PORT = 7946;
     private static final byte DEFAULT_PACKET_LENGTH = 64;
     private DatagramSocket socket;
-    protected final ByteBuffer sendData = ByteBuffer.allocate(128).order(ByteOrder.LITTLE_ENDIAN);
+    protected final ByteBuffer sendData = ByteBuffer.allocate(256).order(ByteOrder.LITTLE_ENDIAN);
     protected final ByteBuffer receiveData = ByteBuffer.allocate(DEFAULT_PACKET_LENGTH).order(ByteOrder.LITTLE_ENDIAN);
     private final DatagramPacket sendPacket = new DatagramPacket(sendData.array(), sendData.capacity());
     private final DatagramPacket receivePacket = new DatagramPacket(receiveData.array(), receiveData.capacity());
@@ -205,6 +205,16 @@ public class WinHandler {
             sendData.rewind();
             sendData.put(RequestCodes.SHOW_DESKTOP);
             sendData.putInt(0);
+            sendPacket(CLIENT_PORT);
+        });
+    }
+
+    public void showWindow(final long handle, final int nCmdShow) {
+        addAction(() -> {
+            sendData.rewind();
+            sendData.put(RequestCodes.SHOW_WINDOW);
+            sendData.putLong(handle);
+            sendData.putInt(nCmdShow);
             sendPacket(CLIENT_PORT);
         });
     }
