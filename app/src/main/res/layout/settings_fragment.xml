@@ -297,8 +297,9 @@
                         android:id="@+id/CBEnableBackgroundService"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
                         android:text="@string/enable_background_service"
-                        android:layout_marginTop="8dp" />
+                        android:tooltipText="@string/enable_background_service_tooltip" />
                 </LinearLayout>
 
                 <TextView

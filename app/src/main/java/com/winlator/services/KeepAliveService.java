@@ -45,7 +45,7 @@ public class KeepAliveService extends Service {
 
     private static boolean isContainerPaused = false;
 
-    private PowerManager.WakeLock wakeLock;
+//    private PowerManager.WakeLock wakeLock;
 
     public static void startSession(Context ctx) {
         if (ctx == null) return;
@@ -103,10 +103,10 @@ public class KeepAliveService extends Service {
 
         // Keep the CPU alive to prevent OS from killing the process when the device is locked
         // or the app is in the background.
-        PowerManager pm = (PowerManager) getSystemService(POWER_SERVICE);
+        /*PowerManager pm = (PowerManager) getSystemService(POWER_SERVICE);
         if (pm != null) {
             wakeLock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "Winlator:KeepAlive");
-        }
+        }*/
 
         ensureChannel();
     }
@@ -116,10 +116,10 @@ public class KeepAliveService extends Service {
         String action = intent != null ? intent.getAction() : null;
 
         if (ACTION_SESSION_PAUSE.equals(action)) {
-            if (wakeLock != null && !wakeLock.isHeld()) wakeLock.acquire();
+//            if (wakeLock != null && !wakeLock.isHeld()) wakeLock.acquire();
             isContainerPaused = true;
         } else if (ACTION_SESSION_RESUME.equals(action)) {
-            if (wakeLock != null && wakeLock.isHeld()) wakeLock.release();
+//            if (wakeLock != null && wakeLock.isHeld()) wakeLock.release();
             isContainerPaused = false;
         }
         else if (ACTION_SESSION_STOP.equals(action)) {
@@ -147,7 +147,9 @@ public class KeepAliveService extends Service {
         int notificationId = AppUtils.generateNotificationId(this, "winlator.keepAlive");
         try {
             if (Build.VERSION.SDK_INT >= 34) {
-                startForeground(notificationId, n, ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE);
+                startForeground(notificationId, n,
+                        ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE |
+                                ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC);
             }
             else {
                 startForeground(notificationId, n);
@@ -237,7 +239,7 @@ public class KeepAliveService extends Service {
 
     @Override
     public void onDestroy() {
-        if (wakeLock != null && wakeLock.isHeld()) wakeLock.release();
+//        if (wakeLock != null && wakeLock.isHeld()) wakeLock.release();
         serviceRunning.set(false);
         super.onDestroy();
     }
