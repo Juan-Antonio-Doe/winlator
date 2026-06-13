@@ -4,12 +4,12 @@
 
 # Winlator
 
-Winlator is an Android application that lets you to run Windows (x86_64) applications with Wine and Box86/Box64.<br>
-This repository stores the latest updates for the Winlator app source.<br>
+The purpose of this repository is to collaborate with the main project and experiment.<br>
 For more information and releases, please visit the main repository: https://github.com/brunodev85/winlator
 
 # Credits and Third-party apps
 
+- Original Winlator by [brunodev85](https://github.com/brunodev85/winlator-app)
 - GLIBC Patches by [Termux Pacman](https://github.com/termux-pacman/glibc-packages)
 - Wine ([winehq.org](https://www.winehq.org/))
 - Box86/Box64 by [ptitseb](https://github.com/ptitSeb)

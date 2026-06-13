@@ -11,6 +11,7 @@ import android.graphics.Point;
 import android.graphics.PointF;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffColorFilter;
+import android.media.AudioManager;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
@@ -26,6 +27,7 @@ import com.winlator.inputcontrols.GamepadState;
 import com.winlator.math.Mathf;
 import com.winlator.winhandler.WinHandler;
 import com.winlator.xserver.Pointer;
+import com.winlator.xserver.XKeycode;
 import com.winlator.xserver.XServer;
 
 import java.io.IOException;
@@ -381,7 +383,7 @@ public class InputControlsView extends View {
                     touchpadView.setPointerButtonLeftEnabled(true);
                     for (ControlElement element : profile.getElements()) {
                         if (element.handleTouchDown(pointerId, x, y)) handled = true;
-                        if (element.getBindingAt(0) == Binding.MOUSE_LEFT_BUTTON) {
+                        if (element.getBindingAt(0) == Binding.MOUSE_LEFT_BUTTON && element.getLastBindingIndex() == 0) {
                             touchpadView.setPointerButtonLeftEnabled(false);
                         }
                     }
@@ -483,6 +485,9 @@ public class InputControlsView extends View {
                 mouseMoveOffset.y = isActionDown ? (offset != 0 ? offset : (binding == Binding.MOUSE_MOVE_UP ? -1 : 1)) : 0;
                 if (isActionDown) createMouseMoveTimer();
             }
+            else if (binding.keycode.id >= XKeycode.KEY_CUSTOM_1.id) {
+                if (!isActionDown) handleCommandKeyEvent(binding);
+            }
             else {
                 Pointer.Button pointerButton = binding.getPointerButton();
                 if (isActionDown) {
@@ -510,5 +515,16 @@ public class InputControlsView extends View {
             catch (IOException e) {}
         }
         return icons[id];
+    }
+
+    private void handleCommandKeyEvent(Binding binding) {
+        Context context = getContext();
+        if (binding == Binding.KEY_VOL_UP || binding == Binding.KEY_VOL_DOWN) {
+            AudioManager audioManager = (AudioManager)context.getSystemService(Context.AUDIO_SERVICE);
+            if (binding == Binding.KEY_VOL_UP) {
+                audioManager.adjustVolume(AudioManager.ADJUST_RAISE, AudioManager.FLAG_PLAY_SOUND);
+            }
+            else audioManager.adjustVolume(AudioManager.ADJUST_LOWER, AudioManager.FLAG_PLAY_SOUND);
+        }
     }
 }
