@@ -132,7 +132,7 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
     private boolean capturePointerOnExternalMouse = true;
     private MagnifierView magnifierView;
     private DebugDialog debugDialog;
-    private int frameRatingWindowId = -1;
+    public int frameRatingWindowId = -1;
     private Win32AppWorkarounds win32AppWorkarounds;
     private String screenEffectProfile;
 
@@ -1069,13 +1069,22 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
         SettingsFragment.resetBox64Version(this);
     }
 
-    private void changeFrameRatingVisibility(Window window, boolean visible) {
+    public void changeFrameRatingVisibility(Window window, boolean visible) {
         if (frameRating == null) return;
         if (visible) {
-            Window child = window.getChildCount() > 0 ? window.getChildren().get(0) : null;
+            if (window.id == frameRatingWindowId) return;
+            Window child = window.getChildAt(0);
             boolean viewable = window.attributes.isMapped() && window.getWidth() >= ScreenInfo.MIN_WIDTH && window.getHeight() >= ScreenInfo.MIN_HEIGHT;
+            Window frameRatingWindow = null;
             if (viewable && (window.isSurface() || (child != null && child.isSurface()))) {
-                Window frameRatingWindow = window.isSurface() ? window : child;
+                frameRatingWindow = window.isSurface() ? window : child;
+            }
+            else if (window.isSurface() && !window.isApplicationWindow()) {
+                Window parent = window.getParent();
+                if (parent != null && parent.isApplicationWindow() && !parent.isSurface()) frameRatingWindow = window;
+            }
+
+            if (frameRatingWindow != null) {
                 if (frameRating.getMode() == FrameRating.Mode.FULL) {
                     Property gpuInfo = frameRatingWindow.getProperty(Atom._NET_WM_GPU_INFO);
                     frameRating.setGPUInfo(gpuInfo != null ? new String(gpuInfo.data.array()) : "N/A");
