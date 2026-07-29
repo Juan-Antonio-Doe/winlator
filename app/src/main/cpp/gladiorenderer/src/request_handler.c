@@ -759,6 +759,7 @@ void gd_handle_glDisableVertexAttribArray(GLContext* context) {
     GLuint index = ArrayBuffer_getInt(&context->inputBuffer);
 
     GLClientState* clientState = &currentRenderer->clientState;
+    if (index < VERTEX_ATTRIB_COUNT) GLVertexArrayObject_setAttribState(clientState, index, VERTEX_ATTRIB_DISABLED, false);
     if (GLRenderer_useARBProgram(currentRenderer, false)) index = clientState->arbProgram[0]->material->location.attributes[index];
     glDisableVertexAttribArray(index);
 }
@@ -1802,7 +1803,8 @@ void gd_handle_glIsList(GLContext* context) {
 void gd_handle_glIsProgram(GLContext* context) {
     GLuint program = ArrayBuffer_getInt(&context->inputBuffer);
 
-    GLboolean result = glIsProgram(program);
+    GLClientState* clientState = &currentRenderer->clientState;
+    GLboolean result = SparseArray_indexOfKey(clientState->programs, program) >= 0 || SparseArray_indexOfKey(clientState->arbPrograms, program) >= 0;
     gl_send(context->clientRing, REQUEST_CODE_GL_IS_PROGRAM, &result, sizeof(GLboolean));
 }
 

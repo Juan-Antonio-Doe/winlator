@@ -209,22 +209,33 @@ static ShaderMaterial* setCurrentMaterial(GLRenderer* renderer, MaterialOptions*
     return material;
 }
 
-bool GLRenderer_useARBProgram(GLRenderer* renderer, bool updateUniforms) {
-    if (!ARBProgram_isActive()) return false;
-    ARBProgram* vertexProgram = renderer->clientState.arbProgram[indexOfGLTarget(GL_VERTEX_PROGRAM_ARB)];
-    ARBProgram* fragmentProgram = renderer->clientState.arbProgram[indexOfGLTarget(GL_FRAGMENT_PROGRAM_ARB)];
+bool GLRenderer_useARBProgram(GLRenderer* renderer, bool fullUpdate) {
+    if (!ARBProgram_isActive(GL_VERTEX_PROGRAM_ARB) && !ARBProgram_isActive(GL_FRAGMENT_PROGRAM_ARB)) return false;
+    GLClientState* clientState = &renderer->clientState;
+    ARBProgram* vertexProgram = clientState->arbProgram[indexOfGLTarget(GL_VERTEX_PROGRAM_ARB)];
+    ARBProgram* fragmentProgram = clientState->arbProgram[indexOfGLTarget(GL_FRAGMENT_PROGRAM_ARB)];
 
-    uint8_t numTextures = MAX(vertexProgram->numTextures, fragmentProgram->numTextures);
-    if (!vertexProgram->material) {
+    uint8_t numTextures = vertexProgram && fragmentProgram ? MAX(vertexProgram->numTextures, fragmentProgram->numTextures) : MAX_TEXCOORDS;
+    ShaderMaterial* material = vertexProgram ? vertexProgram->material : fragmentProgram->material;
+    if (!material) {
         MaterialOptions options = {false, true, false, false, false, numTextures, vertexProgram, fragmentProgram};
-        vertexProgram->material = setCurrentMaterial(renderer, &options);
-        fragmentProgram->material = vertexProgram->material;
+        material = setCurrentMaterial(renderer, &options);
+        if (vertexProgram) vertexProgram->material = material;
+        if (fragmentProgram) fragmentProgram->material = material;
     }
     else {
-        glUseProgram(vertexProgram->material->program);
-        if (updateUniforms) {
+        glUseProgram(material->program);
+        if (fullUpdate) {
             MaterialOptions options = {false, true, false, false, false, numTextures, vertexProgram, fragmentProgram};
-            ShaderMaterial_updateUniforms(vertexProgram->material, renderer, &options);
+            ShaderMaterial_updateUniforms(material, renderer, &options);
+        }
+    }
+
+    if (fullUpdate && material->location.attributes[COLOR_ARRAY_INDEX] != -1) {
+        GLVertexAttrib* colorAttrib = &clientState->vao->attribs[COLOR_ARRAY_INDEX];
+        if (!colorAttrib->state && !colorAttrib->boundArrayBuffer) {
+            GLRenderer_disableVertexAttribute(renderer, material->location.attributes[COLOR_ARRAY_INDEX]);
+            glVertexAttrib4fv(material->location.attributes[COLOR_ARRAY_INDEX], renderer->state.color);
         }
     }
     return true;
@@ -235,7 +246,7 @@ void GLRenderer_drawImmediate(GLRenderer* renderer) {
     GLClientState* clientState = &renderer->clientState;
 
     ShaderMaterial* material = NULL;
-    if (!clientState->program && !ARBProgram_isActive()) {
+    if (!clientState->program && !ARBProgram_isActive(GL_VERTEX_PROGRAM_ARB)) {
         uint8_t numTextures = 0;
         for (int i = 0; i < MAX_TEXCOORDS; i++) {
             if (renderer->state.enabledTextures[i][indexOfGLTarget(GL_TEXTURE_2D)]) numTextures++;

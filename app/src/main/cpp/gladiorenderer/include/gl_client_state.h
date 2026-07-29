@@ -118,7 +118,6 @@ static inline int GLClientState_getArrayIndex(GLenum array) {
             return POSITION_ARRAY_INDEX;
         case GL_COLOR_ARRAY:
             return COLOR_ARRAY_INDEX;
-            break;
         case GL_NORMAL_ARRAY:
             return NORMAL_ARRAY_INDEX;
         case GL_TEXTURE_COORD_ARRAY:

@@ -519,7 +519,7 @@ bool readUnboundVertexArrays(GLContext* context, GLenum drawMode, int drawCount,
             }
 
             int location = i;
-            if (legacyEnabledWithProgram || ARBProgram_isActive()) {
+            if (legacyEnabledWithProgram || clientState->arbProgram[0]) {
                 if (clientState->program) {
                     location = clientState->program->location.attributes[i];
                 }

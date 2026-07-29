@@ -1873,6 +1873,9 @@ void ShaderConverter_getProgramiv(GLuint target, GLenum pname, GLint* params) {
             *params = program ? program->id : 0;
             break;
         }
+        case GL_PROGRAM_UNDER_NATIVE_LIMITS_ARB:
+            *params = 1;
+            break;
         default:
             println("gladio:getProgramiv: unimplemented pname %x", pname);
             break;
@@ -1884,9 +1887,12 @@ void ShaderConverter_updateBoundProgram() {
     if (clientState->program) {
         ShaderProgram* program = clientState->program;
 
-        if (program->hasBuiltinColor && !clientState->vao->attribs[COLOR_ARRAY_INDEX].state && program->location.attributes[COLOR_ARRAY_INDEX] != -1) {
-            GLRenderer_disableVertexAttribute(currentRenderer, program->location.attributes[COLOR_ARRAY_INDEX]);
-            glVertexAttrib4fv(program->location.attributes[COLOR_ARRAY_INDEX], currentRenderer->state.color);
+        if (program->hasBuiltinColor && program->location.attributes[COLOR_ARRAY_INDEX] != -1) {
+            GLVertexAttrib* colorAttrib = &clientState->vao->attribs[COLOR_ARRAY_INDEX];
+            if (!colorAttrib->state && !colorAttrib->boundArrayBuffer) {
+                GLRenderer_disableVertexAttribute(currentRenderer, program->location.attributes[COLOR_ARRAY_INDEX]);
+                glVertexAttrib4fv(program->location.attributes[COLOR_ARRAY_INDEX], currentRenderer->state.color);
+            }
         }
 
         if (program->hasBuiltinUniforms) {
