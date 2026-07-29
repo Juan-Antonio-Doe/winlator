@@ -32,7 +32,6 @@ public class GamepadHandler {
     public static final byte AXIS_MODE_X_Y_Z_RZ = 0;
     public static final byte AXIS_MODE_X_Y_RX_RY_Z_RZ = 1;
     private static final byte GAMEPAD_MAX_COUNT = 4;
-    private static final short PACKET_LENGTH = 256;
     private final WinHandler winHandler;
     private final List<Integer> gamepadClients = new CopyOnWriteArrayList<>();
     private byte dinputMapperType = DINPUT_MAPPER_TYPE_XINPUT;
@@ -192,7 +191,7 @@ public class GamepadHandler {
                 }
             }
 
-            winHandler.sendPacket(port, PACKET_LENGTH);
+            winHandler.sendPacket(port);
         });
     }
 
@@ -233,7 +232,7 @@ public class GamepadHandler {
                 buffer.put(RequestCodes.GET_GAMEPAD_STATE);
                 buffer.put(slot);
                 writeStateToBuffer(buffer, state);
-                winHandler.sendPacket(port, PACKET_LENGTH);
+                winHandler.sendPacket(port);
             });
         }
     }
