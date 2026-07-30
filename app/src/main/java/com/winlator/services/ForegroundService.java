@@ -14,7 +14,6 @@ import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
 import android.os.PowerManager;
-import android.os.SystemClock;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
@@ -56,13 +55,6 @@ public class ForegroundService extends Service {
     private int notificationId = -1;
     private static final String NOTIFICATION_ID_NAME = "winlator.FGS";
 
-    // Handle the 6 hours limit (5h 50min timer) implemented in Android 15.
-    private static final long MAX_SESSION_MS = 5L * 60L * 60L * 1000L
-            + 50L * 60L * 1000L;
-    private final Handler handler = new Handler(Looper.getMainLooper());
-    private long sessionStartMs;
-    private final Runnable timeoutRunnable = this::onTimeout;
-
     // ── Container / game session lifecycle ──────────────────────────────────────────────
     public static void startSession(Context ctx) {
         if (ctx == null) return;
@@ -92,10 +84,6 @@ public class ForegroundService extends Service {
         }
         isSessionInBackground = true;
         Log.d(TAG, "onPauseSession");
-        startTimeoutTimer();    // Start the 6-hour timeout timer when app goes to background
-        /*if (instance != null) {   // Moved to onCreate > ScreenStateReceiver
-            instance.acquireWakeLock();
-        }*/
         updateForegroundState(ctx);
     }
 
@@ -107,7 +95,6 @@ public class ForegroundService extends Service {
         }
         isSessionInBackground = false;
         Log.d(TAG, "onResumeSession");
-        resetTimeoutTimer();    // Reset the 6-hour timeout timer when app returns to foreground
         if (instance != null) {
             instance.releaseWakeLock();
         }
@@ -118,7 +105,6 @@ public class ForegroundService extends Service {
         if (ctx == null) return;
         if (!sessionActive.compareAndSet(true, false)) return;
         isSessionInBackground = false;
-        resetTimeoutTimer();
         if (instance != null) {
             instance.releaseWakeLock();
         }
@@ -264,7 +250,6 @@ public class ForegroundService extends Service {
         if (!hasReason()) {
             Log.d(TAG, "onStartCommand found no active reason; stopping immediately");
             serviceStopping = true;
-            handler.removeCallbacks(timeoutRunnable);
             stopForegroundCompat();
             stopSelf();
             serviceRunning.set(false);
@@ -323,21 +308,18 @@ public class ForegroundService extends Service {
         super.onTaskRemoved(rootIntent);
         Log.i(TAG, "Task removed by user. Tearing down session and exiting process.");
 
-        resetTimeoutTimer();
         sessionActive.set(false);
         isSessionInBackground = false;
 
-        new Thread(() -> {
-            new Handler(Looper.getMainLooper()).post(() -> {
-                serviceRunning.set(false);
-                if (instance != null) {
-                    instance.stopForegroundCompat();
-                    instance.stopSelf();
-                }
-                new Handler(Looper.getMainLooper()).postDelayed(
-                        () -> android.os.Process.killProcess(android.os.Process.myPid()), 500L);
-            });
-        }, "ForegroundServiceCleanup").start();
+        new Thread(() -> new Handler(Looper.getMainLooper()).post(() -> {
+            serviceRunning.set(false);
+            if (instance != null) {
+                instance.stopForegroundCompat();
+                instance.stopSelf();
+            }
+            new Handler(Looper.getMainLooper()).postDelayed(
+                    () -> android.os.Process.killProcess(android.os.Process.myPid()), 500L);
+        }), "ForegroundServiceCleanup").start();
     }
 
     @Override
@@ -346,7 +328,6 @@ public class ForegroundService extends Service {
         serviceStopping = false;
         serviceRunning.set(false);
         isSessionInBackground = false;
-        handler.removeCallbacks(timeoutRunnable);
 
         releaseWakeLock();
 
@@ -370,48 +351,6 @@ public class ForegroundService extends Service {
     @Override
     public IBinder onBind(Intent intent) {
         return null;
-    }
-
-    // Handle the 6 hours limit implemented in Android 15.
-    private void scheduleTimeout() {
-        handler.removeCallbacks(timeoutRunnable);
-        long elapsed = SystemClock.elapsedRealtime() - sessionStartMs;
-        long remaining = MAX_SESSION_MS - elapsed;
-        Log.d(TAG, "Schedule timeout in " + remaining + "ms");
-        if (remaining <= 0) {
-            onTimeout();
-        } else {
-            handler.postDelayed(timeoutRunnable, remaining);
-        }
-    }
-
-    // Start the 6-hour timeout timer when app goes to background
-    private static synchronized void startTimeoutTimer() {
-        ForegroundService svc = instance;
-        if (svc != null) {
-            svc.sessionStartMs = SystemClock.elapsedRealtime();
-            svc.scheduleTimeout();
-        }
-    }
-
-    // Reset the 6-hour timeout timer when app returns to foreground
-    private static synchronized void resetTimeoutTimer() {
-        ForegroundService svc = instance;
-        if (svc != null) {
-            svc.handler.removeCallbacks(svc.timeoutRunnable);
-            Log.d(TAG, "Timeout timer reset - app returned to foreground");
-        }
-    }
-
-    // Handle the 6 hours limit implemented in Android 15.
-    public void onTimeout() {
-        Log.w(TAG, "Service reached 6-hour limit for dataSync. Stopping service.");
-
-        handler.removeCallbacks(timeoutRunnable);
-        sessionActive.set(false);
-        isSessionInBackground = false;
-        stopForegroundCompat();
-        stopSelf();
     }
 
     // ── Utility methods ──────────────────────────────────────────────
