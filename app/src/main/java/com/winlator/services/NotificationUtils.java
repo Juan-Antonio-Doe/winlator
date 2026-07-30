@@ -7,27 +7,30 @@ import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import androidx.core.app.NotificationCompat;
-import com.winlator.BuildConfig;
 import com.winlator.R;
 import com.winlator.MainActivity;
+import java.lang.ref.WeakReference;
+
 public class NotificationUtils {
     private static final String CHANNEL_ID = "winlator_foreground_service";
     private static final String CHANNEL_NAME = "Winlator Foreground Service";
-    public static final String ACTION_EXIT = BuildConfig.APPLICATION_ID + ".EXIT";
 
     private final Context context;
     private final NotificationManager notificationManager;
 
-    private static volatile NotificationUtils instance;
+    private static volatile WeakReference<NotificationUtils> instance;
     public static NotificationUtils getInstance(Context ctx) {
-        if (instance == null) {
+        NotificationUtils inst = instance != null ? instance.get() : null;
+        if (inst == null) {
             synchronized (NotificationUtils.class) {
-                if (instance == null) {
-                    instance = new NotificationUtils(ctx.getApplicationContext());
+                inst = instance != null ? instance.get() : null;
+                if (inst == null) {
+                    inst = new NotificationUtils(ctx.getApplicationContext());
+                    instance = new WeakReference<>(inst);
                 }
             }
         }
-        return instance;
+        return inst;
     }
 
     public NotificationUtils(Context context) {

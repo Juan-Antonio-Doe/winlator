@@ -93,9 +93,9 @@ public class ForegroundService extends Service {
         isSessionInBackground = true;
         Log.d(TAG, "onPauseSession");
         startTimeoutTimer();    // Start the 6-hour timeout timer when app goes to background
-        if (instance != null) {
+        /*if (instance != null) {   // Moved to onCreate > ScreenStateReceiver
             instance.acquireWakeLock();
-        }
+        }*/
         updateForegroundState(ctx);
     }
 
@@ -233,9 +233,11 @@ public class ForegroundService extends Service {
                 if (Intent.ACTION_SCREEN_OFF.equals(action)) {
                     isScreenLocked = true;
                     Log.d(TAG, "Screen turned off / device locked");
+                    acquireWakeLock();
                 } else if (Intent.ACTION_USER_PRESENT.equals(action)) {
                     isScreenLocked = false;
                     Log.d(TAG, "Device unlocked (user present)");
+                    releaseWakeLock();
                 } else if (Intent.ACTION_SCREEN_ON.equals(action)) {
                     // Screen on but keyguard may still be showing.
                     KeyguardManager km = (KeyguardManager) getSystemService(KEYGUARD_SERVICE);
