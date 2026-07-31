@@ -69,7 +69,7 @@ void GLRenderer_initOnEGLContext(GLRenderer* renderer) {
     memcpy(renderer->state.color, color, sizeof(color));
     memcpy(renderer->state.normal, normal, sizeof(normal));
 
-    for (int i = 0; i < MAX_TEXCOORDS; i++) {
+    for (int i = 0; i < MAX_TEXTURES; i++) {
         memcpy(renderer->state.texCoords[i], texCoord, sizeof(texCoord));
 
         GLfloat param = GL_MODULATE;
@@ -144,7 +144,7 @@ static void updateVertexBuffers(GLRenderer* renderer, int* attribLocations) {
         bindVertexBuffer(renderer, renderer->bufferIds[3], attribLocations[NORMAL_ARRAY_INDEX], 3, geometry->normals.size, geometry->normals.buffer);
     }
 
-    for (int i = 0, j = TEXCOORD_ARRAY_INDEX; i < MAX_TEXCOORDS; i++, j++) {
+    for (int i = 0, j = TEXCOORD_ARRAY_INDEX; i < MAX_TEXTURES; i++, j++) {
         if (attribLocations[j] != -1 && geometry->texCoords[i].size > 0) {
             bindVertexBuffer(renderer, renderer->bufferIds[j+1], attribLocations[j], 4, geometry->texCoords[i].size, geometry->texCoords[i].buffer);
         }
@@ -215,7 +215,7 @@ bool GLRenderer_useARBProgram(GLRenderer* renderer, bool fullUpdate) {
     ARBProgram* vertexProgram = clientState->arbProgram[indexOfGLTarget(GL_VERTEX_PROGRAM_ARB)];
     ARBProgram* fragmentProgram = clientState->arbProgram[indexOfGLTarget(GL_FRAGMENT_PROGRAM_ARB)];
 
-    uint8_t numTextures = vertexProgram && fragmentProgram ? MAX(vertexProgram->numTextures, fragmentProgram->numTextures) : MAX_TEXCOORDS;
+    uint8_t numTextures = vertexProgram && fragmentProgram ? MAX(vertexProgram->numTextures, fragmentProgram->numTextures) : MAX_TEXTURES;
     ShaderMaterial* material = vertexProgram ? vertexProgram->material : fragmentProgram->material;
     if (!material) {
         MaterialOptions options = {false, true, false, false, false, numTextures, vertexProgram, fragmentProgram};
@@ -248,7 +248,7 @@ void GLRenderer_drawImmediate(GLRenderer* renderer) {
     ShaderMaterial* material = NULL;
     if (!clientState->program && !ARBProgram_isActive(GL_VERTEX_PROGRAM_ARB)) {
         uint8_t numTextures = 0;
-        for (int i = 0; i < MAX_TEXCOORDS; i++) {
+        for (int i = 0; i < MAX_TEXTURES; i++) {
             if (renderer->state.enabledTextures[i][indexOfGLTarget(GL_TEXTURE_2D)]) numTextures++;
         }
 
@@ -337,7 +337,7 @@ void GLRenderer_endImmediate(GLRenderer* renderer) {
         renderer->geometry.colors.position = 0;
         renderer->geometry.normals.position = 0;
 
-        for (int i = 0; i < MAX_TEXCOORDS; i++) renderer->geometry.texCoords[i].position = 0;
+        for (int i = 0; i < MAX_TEXTURES; i++) renderer->geometry.texCoords[i].position = 0;
     }
 }
 
@@ -381,7 +381,7 @@ void GLRenderer_addVertex(GLRenderer* renderer, GLfloat x, GLfloat y, GLfloat z,
         ArrayBuffer_putBytes(&renderer->geometry.normals, renderer->state.normal, 3 * sizeof(float));
     }
 
-    for (int i = 0; i < MAX_TEXCOORDS; i++) {
+    for (int i = 0; i < MAX_TEXTURES; i++) {
         if (renderer->geometry.texCoords[i].position > 0) {
             ArrayBuffer_putBytes(&renderer->geometry.texCoords[i], renderer->state.texCoords[i], 4 * sizeof(float));
         }
@@ -733,7 +733,7 @@ void GLRenderer_destroy(GLRenderer* renderer) {
     ArrayBuffer_free(&renderer->geometry.colors);
     ArrayBuffer_free(&renderer->geometry.normals);
 
-    for (int i = 0; i < MAX_TEXCOORDS; i++) {
+    for (int i = 0; i < MAX_TEXTURES; i++) {
         ArrayBuffer_free(&renderer->geometry.texCoords[i]);
     }
 
@@ -786,7 +786,9 @@ int GLRenderer_getParamsv(GLRenderer* renderer, GLenum pname, GLenum type, void*
             break;
         case GL_MAX_TEXTURE_UNITS:
         case GL_MAX_TEXTURE_COORDS:
-            if (params) *(GLint*)params = MAX_TEXCOORDS;
+        case GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS:
+        case GL_MAX_TEXTURE_IMAGE_UNITS:
+            if (params) *(GLint*)params = MAX_TEXTURES;
             break;
         case GL_MAX_RECTANGLE_TEXTURE_SIZE:
         case GL_MAX_TEXTURE_SIZE:
@@ -876,6 +878,15 @@ int GLRenderer_getParamsv(GLRenderer* renderer, GLenum pname, GLenum type, void*
             break;
         case GL_PROGRAM_ERROR_POSITION_ARB:
             if (params) *(GLint*)params = -1;
+            break;
+        case GL_TEXTURE_BINDING_1D:
+        case GL_TEXTURE_BINDING_2D:
+        case GL_TEXTURE_BINDING_3D:
+        case GL_TEXTURE_BINDING_CUBE_MAP:
+            if (params) {
+                GLTexture* texture = GLTexture_getBound(getTexTargetForBinding(pname));
+                *(GLuint*)params = texture ? texture->id : 0;
+            }
             break;
         case GL_POINT_SIZE_RANGE:
             pname = GL_ALIASED_POINT_SIZE_RANGE;

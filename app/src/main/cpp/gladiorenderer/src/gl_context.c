@@ -110,7 +110,7 @@ static void setCurrentRenderWindow(GLContext* context, int windowId) {
     ARRAYS_FILL(currentRenderer->clientState.framebuffer, MAX_FRAMEBUFFER_TARGETS, 0);
     GLRenderer_setDrawBuffer(currentRenderer, GL_BACK);
 
-    GLTexture* texture = currentRenderer->clientState.texture[indexOfGLTarget(GL_TEXTURE_2D)];
+    GLTexture* texture = GLTexture_getBound(GL_TEXTURE_2D);
     glBindTexture(GL_TEXTURE_2D, texture ? texture->id : 0);
 
     glViewport(0, 0, width, height);
@@ -131,7 +131,7 @@ static void swapDisplayBuffers(GLContext* context, int drawableId) {
             GLRenderer_setDrawBuffer(currentRenderer, GL_BACK);
         }
 
-        GLTexture* texture = currentRenderer->clientState.texture[indexOfGLTarget(GL_TEXTURE_2D)];
+        GLTexture* texture = GLTexture_getBound(GL_TEXTURE_2D);
         glBindTexture(GL_TEXTURE_2D, texture ? texture->id : 0);
     }
     else {

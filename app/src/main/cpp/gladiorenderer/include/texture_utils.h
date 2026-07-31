@@ -406,4 +406,20 @@ static inline uint32_t getTexTargetAt(int index) {
     }
 }
 
+static inline GLenum getTexTargetForBinding(GLenum binding) {
+    switch (binding) {
+        case GL_TEXTURE_BINDING_1D:
+        case GL_TEXTURE_BINDING_2D:
+            return GL_TEXTURE_2D;
+        case GL_TEXTURE_BINDING_3D:
+            return GL_TEXTURE_2D;
+        case GL_TEXTURE_BINDING_CUBE_MAP:
+            return GL_TEXTURE_CUBE_MAP;
+        case GL_TEXTURE_BINDING_2D_ARRAY:
+            return GL_TEXTURE_2D_ARRAY;
+        default:
+            return GL_NONE;
+    }
+}
+
 #endif

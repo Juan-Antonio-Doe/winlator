@@ -24,7 +24,7 @@ typedef struct ASMSource {
     ArrayMap variables;
     IntArray genericAttribs;
     GLenum type;
-    char samplerTypes[MAX_TEXCOORDS];
+    char samplerTypes[MAX_TEXTURES];
     uint8_t maxTexCoords;
 } ASMSource;
 
@@ -757,7 +757,7 @@ void ARBProgram_setSource(ARBProgram* program, GLenum format, char* string, GLui
     memcpy(program->samplerTypes, asmSource.samplerTypes, sizeof(program->samplerTypes));
 
     uint8_t numTextures = 0;
-    for (int i = 0; i < MAX_TEXCOORDS; i++) if (asmSource.samplerTypes[i] > 0) numTextures++;
+    for (int i = 0; i < MAX_TEXTURES; i++) if (asmSource.samplerTypes[i] > 0) numTextures++;
     program->numTextures = MAX(numTextures, asmSource.maxTexCoords);
 
     for (int i = 0; i < asmSource.variables.size; i++) {

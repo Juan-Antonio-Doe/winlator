@@ -31,7 +31,7 @@ void gd_handle_glAlphaFunc(GLContext* context) {
 void gd_handle_glArrayElement(GLContext* context) {
     GLint i = ArrayBuffer_getInt(&context->inputBuffer);
 
-    for (int j = 0, count = (MIN_VERTEX_ATTRIBS + MAX_TEXCOORDS); j < count; j++) readVertexArrayElement(context, j, i);
+    for (int j = 0, count = (MIN_VERTEX_ATTRIBS + MAX_TEXTURES); j < count; j++) readVertexArrayElement(context, j, i);
 
     GLClientState* clientState = &currentRenderer->clientState;
     if (clientState->vao->attribs[POSITION_ARRAY_INDEX].state) {
@@ -1102,43 +1102,45 @@ void gd_handle_glFramebufferRenderbuffer(GLContext* context) {
 void gd_handle_glFramebufferTexture(GLContext* context) {
     GLenum target = ArrayBuffer_getInt(&context->inputBuffer);
     GLenum attachment = ArrayBuffer_getInt(&context->inputBuffer);
-    GLuint texture = ArrayBuffer_getInt(&context->inputBuffer);
+    GLuint textureId = ArrayBuffer_getInt(&context->inputBuffer);
     GLint level = ArrayBuffer_getInt(&context->inputBuffer);
 
-    GLenum textarget = GLTexture_getType(texture);
-    GLFramebuffer_setAttachment(target, attachment, textarget, texture, level);
+    GLTexture* texture = GLTexture_get(textureId);
+    GLFramebuffer_setAttachment(target, attachment, texture->type, texture->id, level);
 }
 
 void gd_handle_glFramebufferTexture2D(GLContext* context) {
     GLenum target = ArrayBuffer_getInt(&context->inputBuffer);
     GLenum attachment = ArrayBuffer_getInt(&context->inputBuffer);
     GLenum textarget = ArrayBuffer_getInt(&context->inputBuffer);
-    GLuint texture = ArrayBuffer_getInt(&context->inputBuffer);
+    GLuint textureId = ArrayBuffer_getInt(&context->inputBuffer);
     GLint level = ArrayBuffer_getInt(&context->inputBuffer);
 
-    GLFramebuffer_setAttachment(target, attachment, parseTexTarget(textarget), texture, level);
+    GLTexture* texture = GLTexture_get(textureId);
+    GLFramebuffer_setAttachment(target, attachment, parseTexTarget(textarget), texture->id, level);
 }
 
 void gd_handle_glFramebufferTexture3D(GLContext* context) {
     GLenum target = ArrayBuffer_getInt(&context->inputBuffer);
     GLenum attachment = ArrayBuffer_getInt(&context->inputBuffer);
     GLenum textarget = ArrayBuffer_getInt(&context->inputBuffer);
-    GLuint texture = ArrayBuffer_getInt(&context->inputBuffer);
+    GLuint textureId = ArrayBuffer_getInt(&context->inputBuffer);
     GLint level = ArrayBuffer_getInt(&context->inputBuffer);
     GLint zoffset = ArrayBuffer_getInt(&context->inputBuffer);
 
-    GLFramebuffer_setAttachment(target, attachment, parseTexTarget(textarget), texture, level);
+    GLTexture* texture = GLTexture_get(textureId);
+    GLFramebuffer_setAttachment(target, attachment, parseTexTarget(textarget), texture->id, level);
 }
 
 void gd_handle_glFramebufferTextureLayer(GLContext* context) {
     GLenum target = ArrayBuffer_getInt(&context->inputBuffer);
     GLenum attachment = ArrayBuffer_getInt(&context->inputBuffer);
-    GLuint texture = ArrayBuffer_getInt(&context->inputBuffer);
+    GLuint textureId = ArrayBuffer_getInt(&context->inputBuffer);
     GLint level = ArrayBuffer_getInt(&context->inputBuffer);
     GLint layer = ArrayBuffer_getInt(&context->inputBuffer);
 
-    GLenum textarget = GLTexture_getType(texture);
-    GLFramebuffer_setAttachment(target, attachment, textarget, texture, level);
+    GLTexture* texture = GLTexture_get(textureId);
+    GLFramebuffer_setAttachment(target, attachment, texture->type, texture->id, level);
 }
 
 void gd_handle_glFrontFace(GLContext* context) {
@@ -1219,7 +1221,7 @@ void gd_handle_glGenTextures(GLContext* context) {
     GLsizei n = ArrayBuffer_getInt(&context->inputBuffer);
 
     GLuint textures[n];
-    glGenTextures(n, textures);
+    for (int i = 0; i < n; i++) textures[i] = GLTexture_create();
     gl_send(context->clientRing, REQUEST_CODE_GL_GEN_TEXTURES, textures, sizeof(textures));
 }
 
@@ -1844,9 +1846,10 @@ void gd_handle_glIsSync(GLContext* context) {
 }
 
 void gd_handle_glIsTexture(GLContext* context) {
-    GLuint texture = ArrayBuffer_getInt(&context->inputBuffer);
+    GLuint textureId = ArrayBuffer_getInt(&context->inputBuffer);
 
-    GLboolean result = glIsTexture(texture);
+    GLTexture* texture = GLTexture_get(textureId);
+    GLboolean result = texture->id > 0 ? glIsTexture(texture->id) : GL_FALSE;
     gl_send(context->clientRing, REQUEST_CODE_GL_IS_TEXTURE, &result, sizeof(GLboolean));
 }
 
@@ -2061,7 +2064,7 @@ void gd_handle_glMultiTexCoord4f(GLContext* context) {
     GLfloat q = ArrayBuffer_getFloat(&context->inputBuffer);
 
     int index = target - GL_TEXTURE0;
-    if (index < MAX_TEXCOORDS) {
+    if (index < MAX_TEXTURES) {
         float* texCoord = currentRenderer->state.texCoords[index];
         texCoord[0] = s;
         texCoord[1] = t;

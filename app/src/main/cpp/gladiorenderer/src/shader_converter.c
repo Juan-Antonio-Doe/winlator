@@ -1351,7 +1351,7 @@ static void injectBuiltinVariables(ShaderProgram* program, ShaderObject* shader)
 
         if (shader->code.flags & FLAG_BUILTIN_MULTITEXCOORD) {
             char text[64];
-            for (int i = 0; i < MAX_TEXCOORDS; i++) {
+            for (int i = 0; i < MAX_TEXTURES; i++) {
                 sprintf(text, "in vec4 gd_MultiTexCoord%d;", i);
                 insertCodeLine(shader, head++, strdup(text));
             }
@@ -1380,7 +1380,7 @@ static void injectBuiltinVariables(ShaderProgram* program, ShaderObject* shader)
 
     if (shader->code.flags & FLAG_BUILTIN_TEXCOORD) {
         char text[64];
-        sprintf(text, "%s vec4 gd_TexCoord[%d];", prefix, MAX_TEXCOORDS);
+        sprintf(text, "%s vec4 gd_TexCoord[%d];", prefix, MAX_TEXTURES);
         insertCodeLine(shader, head++, strdup(text));
     }
 
@@ -1395,7 +1395,7 @@ static void injectBuiltinVariables(ShaderProgram* program, ShaderObject* shader)
 
     if (shader->code.flags & FLAG_BUILTIN_TEXTURE_MATRIX) {
         char text[64];
-        sprintf(text, "uniform mat4 gd_TextureMatrix[%d];", MAX_TEXCOORDS);
+        sprintf(text, "uniform mat4 gd_TextureMatrix[%d];", MAX_TEXTURES);
         insertCodeLine(shader, head++, strdup(text));
     }
 
@@ -1732,7 +1732,7 @@ static void linkShaderProgram(ShaderProgram* program) {
         program->location.attributes[COLOR_ARRAY_INDEX] = glGetAttribLocation(program->id, "gd_Color");
         program->location.attributes[NORMAL_ARRAY_INDEX] = glGetAttribLocation(program->id, "gd_Normal");
 
-        for (int i = 0, j = TEXCOORD_ARRAY_INDEX; i < MAX_TEXCOORDS; i++, j++) {
+        for (int i = 0, j = TEXCOORD_ARRAY_INDEX; i < MAX_TEXTURES; i++, j++) {
             char attribName[32];
             sprintf(attribName, "gd_MultiTexCoord%d", i);
             program->location.attributes[j] = glGetAttribLocation(program->id, attribName);
@@ -1746,7 +1746,7 @@ static void linkShaderProgram(ShaderProgram* program) {
         program->location.modelViewProjectionMatrix = glGetUniformLocation(program->id, "gd_ModelViewProjectionMatrix");
 
         char uniformName[32] = {0};
-        for (int i = 0; i < MAX_TEXCOORDS; i++) {
+        for (int i = 0; i < MAX_TEXTURES; i++) {
             sprintf(uniformName, "gd_TextureMatrix[%d]", i);
             program->location.textureMatrix[i] = glGetUniformLocation(program->id, uniformName);
         }
@@ -1914,7 +1914,7 @@ void ShaderConverter_updateBoundProgram() {
                 glUniformMatrix4fv(program->location.modelViewProjectionMatrix, 1, GL_FALSE, matrix);
             }
 
-            for (int i = 0; i < MAX_TEXCOORDS; i++) {
+            for (int i = 0; i < MAX_TEXTURES; i++) {
                 if (program->location.textureMatrix[i] != -1) {
                     float* matrix = GLRenderer_getMatrixFromStack(currentRenderer, TEXTURE_MATRIX_INDEX);
                     glUniformMatrix4fv(program->location.textureMatrix[i], 1, GL_FALSE, matrix);

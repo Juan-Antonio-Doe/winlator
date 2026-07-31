@@ -25,7 +25,7 @@ typedef struct ARBProgram {
     GLuint threadId;
     char* shaderCode;
     char* asmSource;
-    char samplerTypes[MAX_TEXCOORDS];
+    char samplerTypes[MAX_TEXTURES];
     ArrayList variables;
     ShaderMaterial* material;
     uint8_t numTextures;

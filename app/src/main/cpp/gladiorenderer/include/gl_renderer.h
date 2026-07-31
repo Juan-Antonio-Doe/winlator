@@ -46,7 +46,7 @@ typedef struct Geometry {
     ArrayBuffer vertices;
     ArrayBuffer colors;
     ArrayBuffer normals;
-    ArrayBuffer texCoords[MAX_TEXCOORDS];
+    ArrayBuffer texCoords[MAX_TEXTURES];
     ArrayBuffer indices;
 } Geometry;
 
@@ -116,9 +116,9 @@ typedef struct GLState {
 
     float color[4];
     float normal[3];
-    float texCoords[MAX_TEXCOORDS][4];
-    TexEnv texEnv[MAX_TEXCOORDS];
-    bool enabledTextures[MAX_TEXCOORDS][MAX_TEXTURE_TARGETS];
+    float texCoords[MAX_TEXTURES][4];
+    TexEnv texEnv[MAX_TEXTURES];
+    bool enabledTextures[MAX_TEXTURES][MAX_TEXTURE_TARGETS];
     bool enabledARBPrograms[2];
 
     GLenum shadeModel;

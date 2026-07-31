@@ -28,12 +28,12 @@ static void setupMaterial(ShaderMaterial* material, MaterialOptions* options) {
         material->location.textureMatrix = glGetUniformLocation(material->program, "gd_TextureMatrix");
 
         const char* texEnvStructNames[] = {"mode", "color", "combineRGBA", "rgbaScale", "sourceRGBA", "operandRGBA", "lodBias"};
-        for (int i = 0; i < MAX_TEXCOORDS; i++) {
+        for (int i = 0; i < MAX_TEXTURES; i++) {
             material->location.texture[i] = -1;
             for (int j = 0; j < ARRAY_SIZE(texEnvStructNames); j++) material->location.texEnv[i][j] = -1;
         }
 
-        for (int i = 0; i < MAX_TEXCOORDS; i++) {
+        for (int i = 0; i < MAX_TEXTURES; i++) {
             sprintf(uniformName, "gd_Texture%d", i);
             material->location.texture[i] = glGetUniformLocation(material->program, uniformName);
 
@@ -43,7 +43,7 @@ static void setupMaterial(ShaderMaterial* material, MaterialOptions* options) {
             }
         }
 
-        for (int i = TEXCOORD_ARRAY_INDEX, j = 0; j < MAX_TEXCOORDS; j++, i++) {
+        for (int i = TEXCOORD_ARRAY_INDEX, j = 0; j < MAX_TEXTURES; j++, i++) {
             char attribName[32];
             sprintf(attribName, "gd_MultiTexCoord%d", j);
             material->location.attributes[i] = glGetAttribLocation(material->program, attribName);
@@ -451,8 +451,8 @@ static char* defineShaderOptions(GLenum type, char* source, MaterialOptions* opt
                 ArrayBuffer_putString(&replaces[1], "uniform gd_TexEnvParameters gd_TexEnv%d;\n", i);
                 ArrayBuffer_putString(&replaces[2], "in vec4 gd_TexCoord%d;\n", i);
 
-                if (options->vertexProgram && !options->fragmentProgram) {
-                    ArrayBuffer_putString(&replaces[3], "if (gd_TexEnv%d.lodBias != 10000.0) finalColor = applyTexEnv(gd_Texture%d, gd_TexCoord%d, gd_TexEnv%d, finalColor);\n", i, i, i, i);
+                if (options->numTextures == MAX_TEXTURES) {
+                    ArrayBuffer_putString(&replaces[3], "if (gd_TexEnv%d.mode != 0) finalColor = applyTexEnv(gd_Texture%d, gd_TexCoord%d, gd_TexEnv%d, finalColor);\n", i, i, i, i);
                 }
                 else ArrayBuffer_putString(&replaces[3], "finalColor = applyTexEnv(gd_Texture%d, gd_TexCoord%d, gd_TexEnv%d, finalColor);\n", i, i, i);
             }
@@ -650,21 +650,19 @@ void ShaderMaterial_updateUniforms(ShaderMaterial* material, GLRenderer* rendere
             glUniformMatrix4fv(material->location.textureMatrix, 1, GL_FALSE, GLRenderer_getMatrixFromStack(renderer, TEXTURE_MATRIX_INDEX));
         }
 
-        for (int i = 0; i < MAX_TEXCOORDS; i++) {
+        for (int i = 0; i < MAX_TEXTURES; i++) {
             if (material->location.texture[i] != -1) {
                 glUniform1i(material->location.texture[i], i);
 
-                glUniform1i(material->location.texEnv[i][0], renderer->state.texEnv[i].mode);
+                glUniform1i(material->location.texEnv[i][0],
+                            options->numTextures != MAX_TEXTURES ||
+                            renderer->state.enabledTextures[i][indexOfGLTarget(GL_TEXTURE_2D)] ? renderer->state.texEnv[i].mode : 0);
                 glUniform4fv(material->location.texEnv[i][1], 1, renderer->state.texEnv[i].color);
                 glUniform2iv(material->location.texEnv[i][2], 1, renderer->state.texEnv[i].combineRGBA);
                 glUniform2fv(material->location.texEnv[i][3], 1, renderer->state.texEnv[i].rgbaScale);
                 glUniform4iv(material->location.texEnv[i][4], 1, renderer->state.texEnv[i].sourceRGBA);
                 glUniform4iv(material->location.texEnv[i][5], 1, renderer->state.texEnv[i].operandRGBA);
-
-                if (options->vertexProgram && !options->fragmentProgram && !renderer->state.enabledTextures[i][indexOfGLTarget(GL_TEXTURE_2D)]) {
-                    glUniform1f(material->location.texEnv[i][6], 10000.0f);
-                }
-                else glUniform1f(material->location.texEnv[i][6], renderer->state.texEnv[i].lodBias);
+                glUniform1f(material->location.texEnv[i][6], renderer->state.texEnv[i].lodBias);
             }
         }
     }
