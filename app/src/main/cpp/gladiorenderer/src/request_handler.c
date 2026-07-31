@@ -1364,8 +1364,8 @@ void gd_handle_glGetFramebufferAttachmentParameteriv(GLContext* context) {
     GLenum attachment = ArrayBuffer_getInt(&context->inputBuffer);
     GLenum pname = ArrayBuffer_getInt(&context->inputBuffer);
 
-    GLint params = 0;
-    glGetFramebufferAttachmentParameteriv(target, attachment, pname, &params);
+    GLint params;
+    GLFramebuffer_getParamsv(target, attachment, pname, &params);
     gl_send(context->clientRing, REQUEST_CODE_GL_GET_FRAMEBUFFER_ATTACHMENT_PARAMETERIV, &params, sizeof(GLint));
 }
 

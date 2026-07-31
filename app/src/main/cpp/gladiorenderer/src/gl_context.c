@@ -59,14 +59,14 @@ static void createDisplayBufAttachments(GLContext* context) {
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+            glTexImage2D(GL_TEXTURE_2D, 0, PREFERRED_FRAMEBUFFER_FORMAT, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
             glBindTexture(GL_TEXTURE_2D, 0);
         }
 
         if (context->displayBufAttachments[i].renderbuffer == 0) {
             glGenRenderbuffers(1, &context->displayBufAttachments[i].renderbuffer);
             glBindRenderbuffer(GL_RENDERBUFFER, context->displayBufAttachments[i].renderbuffer);
-            glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, width, height);
+            glRenderbufferStorage(GL_RENDERBUFFER, PREFERRED_RENDERBUFFER_FORMAT, width, height);
             glBindRenderbuffer(GL_RENDERBUFFER, 0);
         }
     }
