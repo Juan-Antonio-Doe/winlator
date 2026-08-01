@@ -21,6 +21,7 @@ import androidx.annotation.Nullable;
 import androidx.preference.PreferenceManager;
 
 import com.winlator.MainActivity;
+import com.winlator.R;
 import com.winlator.XServerDisplayActivity;
 
 import java.util.Objects;
@@ -361,10 +362,10 @@ public class ForegroundService extends Service {
 
         if (sessionActive.get()) {
             return isSessionInBackground && (isDeviceLocked() || !isInPictureInPictureMode())
-                    ? "Container session is paused"
-                    : "There is a container session running";
+                    ? svc.getString(R.string.fgs_notification_content_container_background)
+                    : svc.getString(R.string.fgs_notification_content_container_foreground);
         }
-        return "Winlator is running in the background";
+        return svc.getString(R.string.fgs_notification_content_else);
     }
 
     private void acquireWakeLock() {

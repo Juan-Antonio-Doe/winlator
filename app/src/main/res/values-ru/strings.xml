@@ -293,9 +293,9 @@
     <string name="full">Полный</string>
     <string name="renderer">Рендерер</string>
     <string name="default_no_override">Стандартный (без замены)</string>
-    <string name="foreground_service_notification_channel_desc">Поддерживает работу Winlator в фоновом режиме, чтобы приостановленная сессия Wine не прерывалась управлением фоновыми процессами Android.</string>
-    <string name="foreground_service_notification_content_container_p">Сессия контейнера приостановлена в фоновом режиме</string>
-    <string name="foreground_service_notification_content_container_r">В фоновом режиме выполняется сессия контейнера</string>
-    <string name="foreground_service_notification_content_else">Winlator работает в фоновом режиме</string>
+    <string name="fgs_notification_channel_desc">Поддерживает работу Winlator в фоновом режиме, чтобы приостановленная сессия Wine не прерывалась управлением фоновыми процессами Android.</string>
+    <string name="fgs_notification_content_container_background">Сессия контейнера приостановлена в фоновом режиме</string>
+    <string name="fgs_notification_content_container_foreground">Запущен контейнерный сеанс</string>
+    <string name="fgs_notification_content_else">Winlator работает в фоновом режиме</string>
     <string name="enable_background_wakelock">Включить wakelock, когда устройство заблокировано</string>
 </resources>
