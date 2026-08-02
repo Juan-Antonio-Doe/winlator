@@ -131,8 +131,12 @@ public class ForegroundService extends Service {
         return appInPipMode.get();
     }
 
-    public static boolean isAppInBackground()  { return isAppInBackground;  }
-    public static boolean isDeviceLocked()     { return isScreenLocked;      }
+    public static boolean isAppInBackground()  {
+        return isAppInBackground;
+    }
+    public static boolean isDeviceLocked()     {
+        return isScreenLocked;
+    }
 
     public static boolean isAppNotVisible() {
         return isAppInBackground || isScreenLocked;
