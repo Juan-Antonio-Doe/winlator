@@ -71,7 +71,7 @@ static inline void BCDecoder_decodeChannel(uint64_t data, uint8_t* dst, int x, i
     }
 
     if (c[0] > c[1]) {
-        for (int i = 2; i < 8; ++i) {
+        for (int i = 2; i < 8; i++) {
             c[i] = ((8 - i) * c[0] + (i - 1) * c[1]) / 7;
         }
     }

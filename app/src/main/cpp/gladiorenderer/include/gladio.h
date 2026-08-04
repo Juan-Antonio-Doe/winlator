@@ -271,6 +271,7 @@ static inline uint8_t indexOfGLTarget(GLenum target) {
         case GL_VERTEX_PROGRAM_TWO_SIDE:
         case GL_ARRAY_BUFFER:
         case GL_TEXTURE_1D:
+        case GL_TEXTURE_RECTANGLE:
             return 0;
         case GL_TEXTURE_3D:
         case GL_DRAW_FRAMEBUFFER:

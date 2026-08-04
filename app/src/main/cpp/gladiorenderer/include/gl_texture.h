@@ -10,6 +10,7 @@ typedef struct GLTexture {
     short width;
     short height;
     bool generateMipmap;
+    bool normalizeCoords;
 } GLTexture;
 
 extern GLuint GLTexture_create();

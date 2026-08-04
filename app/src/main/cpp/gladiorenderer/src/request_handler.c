@@ -151,7 +151,7 @@ void gd_handle_glBindTexture(GLContext* context) {
     GLenum target = ArrayBuffer_getInt(&context->inputBuffer);
     GLuint texture = ArrayBuffer_getInt(&context->inputBuffer);
 
-    GLTexture_bind(parseTexTarget(target), texture);
+    GLTexture_bind(target, texture);
 }
 
 void gd_handle_glBindVertexArray(GLContext* context) {
@@ -2542,7 +2542,7 @@ void gd_handle_glTexCoord4f(GLContext* context) {
     GLfloat t = ArrayBuffer_getFloat(&context->inputBuffer);
     GLfloat r = ArrayBuffer_getFloat(&context->inputBuffer);
     GLfloat q = ArrayBuffer_getFloat(&context->inputBuffer);
-
+\
     float* texCoord = currentRenderer->state.texCoords[0];
     texCoord[0] = s;
     texCoord[1] = t;

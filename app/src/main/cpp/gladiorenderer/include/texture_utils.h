@@ -197,7 +197,7 @@ static inline void convertTexImageFormat(uint32_t target, int* internalformat, u
 
 #if IS_DEBUG_ENABLED(DEBUG_MODE_TEXTURE_FORMAT)
     static SparseArray debugFormats = {0};
-    const int key[] = {*internalformat, *format, *type};
+    const int key[] = {target, *internalformat, *format, *type};
     uint32_t hash = fnv1aHash32(key, sizeof(key));
     if (SparseArray_indexOfKey(&debugFormats, hash) < 0) {
         SparseArray_put(&debugFormats, hash, NULL);
@@ -406,10 +406,11 @@ static inline uint32_t getTexTargetAt(int index) {
     }
 }
 
-static inline GLenum getTexTargetForBinding(GLenum binding) {
+static inline uint32_t getTexTargetForBinding(uint32_t binding) {
     switch (binding) {
         case GL_TEXTURE_BINDING_1D:
         case GL_TEXTURE_BINDING_2D:
+        case GL_TEXTURE_BINDING_RECTANGLE:
             return GL_TEXTURE_2D;
         case GL_TEXTURE_BINDING_3D:
             return GL_TEXTURE_2D;
@@ -419,6 +420,25 @@ static inline GLenum getTexTargetForBinding(GLenum binding) {
             return GL_TEXTURE_2D_ARRAY;
         default:
             return GL_NONE;
+    }
+}
+
+static inline uint8_t getTexTargetFlag(uint32_t target) {
+    switch (target) {
+        case GL_TEXTURE_1D:
+            return (1<<1);
+        case GL_TEXTURE_2D:
+            return (1<<2);
+        case GL_TEXTURE_3D:
+            return (1<<3);
+        case GL_TEXTURE_CUBE_MAP:
+            return (1<<4);
+        case GL_TEXTURE_RECTANGLE:
+            return (1<<5);
+        case GL_TEXTURE_2D_ARRAY:
+            return (1<<6);
+        default:
+            return 0;
     }
 }
 

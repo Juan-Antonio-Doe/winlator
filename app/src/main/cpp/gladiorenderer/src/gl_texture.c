@@ -26,6 +26,8 @@ GLTexture* GLTexture_getBound(GLenum target) {
 }
 
 void GLTexture_bind(GLenum target, GLuint id) {
+    bool isTextureRect = target == GL_TEXTURE_RECTANGLE;
+    target = parseTexTarget(target);
     uint8_t activeTexture = currentRenderer->clientState.activeTexture;
     if (id == 0) {
         currentRenderer->clientState.texture[activeTexture][indexOfGLTarget(target)] = NULL;
@@ -36,6 +38,7 @@ void GLTexture_bind(GLenum target, GLuint id) {
     GLTexture* texture = SparseArray_get(currentRenderer->clientState.textures, id);
     if (!texture) texture = createNamedTexture(id);
     texture->type = target;
+    texture->normalizeCoords = isTextureRect;
     GLX_CONTEXT_UNLOCK();
     currentRenderer->clientState.texture[activeTexture][indexOfGLTarget(target)] = texture;
     glBindTexture(target, texture->id);

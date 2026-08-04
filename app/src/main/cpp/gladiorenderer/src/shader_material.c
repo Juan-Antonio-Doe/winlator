@@ -451,10 +451,7 @@ static char* defineShaderOptions(GLenum type, char* source, MaterialOptions* opt
                 ArrayBuffer_putString(&replaces[1], "uniform gd_TexEnvParameters gd_TexEnv%d;\n", i);
                 ArrayBuffer_putString(&replaces[2], "in vec4 gd_TexCoord%d;\n", i);
 
-                if (options->numTextures == MAX_TEXTURES) {
-                    ArrayBuffer_putString(&replaces[3], "if (gd_TexEnv%d.mode != 0) finalColor = applyTexEnv(gd_Texture%d, gd_TexCoord%d, gd_TexEnv%d, finalColor);\n", i, i, i, i);
-                }
-                else ArrayBuffer_putString(&replaces[3], "finalColor = applyTexEnv(gd_Texture%d, gd_TexCoord%d, gd_TexEnv%d, finalColor);\n", i, i, i);
+                ArrayBuffer_putString(&replaces[3], "finalColor = gd_TexEnv%d.mode != 0 ? applyTexEnv(gd_Texture%d, gd_TexCoord%d, gd_TexEnv%d, finalColor) : finalColor;\n", i, i, i, i);
             }
 
             char* searches[] = {
@@ -654,14 +651,22 @@ void ShaderMaterial_updateUniforms(ShaderMaterial* material, GLRenderer* rendere
             if (material->location.texture[i] != -1) {
                 glUniform1i(material->location.texture[i], i);
 
-                glUniform1i(material->location.texEnv[i][0],
-                            options->numTextures != MAX_TEXTURES ||
-                            renderer->state.enabledTextures[i][indexOfGLTarget(GL_TEXTURE_2D)] ? renderer->state.texEnv[i].mode : 0);
+                GLTexture* texture = renderer->clientState.texture[i][indexOfGLTarget(GL_TEXTURE_2D)];
+                if (texture && texture->originFormat == GL_ALPHA) {
+                    glUniform1i(material->location.texEnv[i][0], renderer->state.enabledTextures[i] ? GL_COMBINE : 0);
+                    glUniform2i(material->location.texEnv[i][2], GL_REPLACE, renderer->state.texEnv[i].mode);
+                    glUniform4i(material->location.texEnv[i][4], GL_PREVIOUS, GL_PREVIOUS, GL_TEXTURE, GL_PREVIOUS);
+                    glUniform4i(material->location.texEnv[i][5], GL_SRC_COLOR, GL_SRC_COLOR, GL_SRC_ALPHA, GL_SRC_ALPHA);
+                }
+                else {
+                    glUniform1i(material->location.texEnv[i][0], renderer->state.enabledTextures[i] ? renderer->state.texEnv[i].mode : 0);
+                    glUniform2iv(material->location.texEnv[i][2], 1, renderer->state.texEnv[i].combineRGBA);
+                    glUniform4iv(material->location.texEnv[i][4], 1, renderer->state.texEnv[i].sourceRGBA);
+                    glUniform4iv(material->location.texEnv[i][5], 1, renderer->state.texEnv[i].operandRGBA);
+                }
+
                 glUniform4fv(material->location.texEnv[i][1], 1, renderer->state.texEnv[i].color);
-                glUniform2iv(material->location.texEnv[i][2], 1, renderer->state.texEnv[i].combineRGBA);
                 glUniform2fv(material->location.texEnv[i][3], 1, renderer->state.texEnv[i].rgbaScale);
-                glUniform4iv(material->location.texEnv[i][4], 1, renderer->state.texEnv[i].sourceRGBA);
-                glUniform4iv(material->location.texEnv[i][5], 1, renderer->state.texEnv[i].operandRGBA);
                 glUniform1f(material->location.texEnv[i][6], renderer->state.texEnv[i].lodBias);
             }
         }

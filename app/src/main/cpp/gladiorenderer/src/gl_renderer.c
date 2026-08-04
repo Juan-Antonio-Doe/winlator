@@ -121,6 +121,16 @@ static void bindVertexBuffer(GLRenderer* renderer, GLuint bufferId, GLint locati
     glVertexAttribPointer(location, itemSize, GL_FLOAT, GL_FALSE, 0, (void*)0);
 }
 
+static void normalizeTexCoords(GLTexture* texture, ArrayBuffer* texCoords) {
+    float* vectors = (float*)texCoords->buffer;
+    float invWidth = 1.0f / texture->width;
+    float invHeight = 1.0f / texture->height;
+    for (int i = 0, count = texCoords->size / sizeof(float); i < count; i += 4) {
+        vectors[i+0] *= invWidth;
+        vectors[i+1] *= invHeight;
+    }
+}
+
 static void updateVertexBuffers(GLRenderer* renderer, int* attribLocations) {
     Geometry* geometry = &renderer->geometry;
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, renderer->bufferIds[0]);
@@ -144,8 +154,10 @@ static void updateVertexBuffers(GLRenderer* renderer, int* attribLocations) {
         bindVertexBuffer(renderer, renderer->bufferIds[3], attribLocations[NORMAL_ARRAY_INDEX], 3, geometry->normals.size, geometry->normals.buffer);
     }
 
-    for (int i = 0, j = TEXCOORD_ARRAY_INDEX; i < MAX_TEXTURES; i++, j++) {
+    for (int i = 0, j = TEXCOORD_ARRAY_INDEX, k, count; i < MAX_TEXTURES; i++, j++) {
         if (attribLocations[j] != -1 && geometry->texCoords[i].size > 0) {
+            GLTexture* texture = renderer->clientState.texture[i][indexOfGLTarget(GL_TEXTURE_2D)];
+            if (texture && texture->normalizeCoords) normalizeTexCoords(texture, &geometry->texCoords[i]);
             bindVertexBuffer(renderer, renderer->bufferIds[j+1], attribLocations[j], 4, geometry->texCoords[i].size, geometry->texCoords[i].buffer);
         }
         geometry->texCoords[i].size = 0;
@@ -248,9 +260,7 @@ void GLRenderer_drawImmediate(GLRenderer* renderer) {
     ShaderMaterial* material = NULL;
     if (!clientState->program && !ARBProgram_isActive(GL_VERTEX_PROGRAM_ARB)) {
         uint8_t numTextures = 0;
-        for (int i = 0; i < MAX_TEXTURES; i++) {
-            if (renderer->state.enabledTextures[i][indexOfGLTarget(GL_TEXTURE_2D)]) numTextures++;
-        }
+        for (int i = 0; i < MAX_TEXTURES; i++) if (renderer->state.enabledTextures[i]) numTextures = i+1;
 
         bool pointSprite = renderer->state.point.sprite || renderer->state.point.smooth;
         MaterialOptions options = {renderer->state.lighting, renderer->state.alphaTest.enabled, renderer->state.fog.enabled, pointSprite, true, numTextures, NULL, NULL};
@@ -458,10 +468,11 @@ void GLRenderer_setCapabilityState(GLRenderer* renderer, GLenum cap, bool state,
         case GL_TEXTURE_1D:
         case GL_TEXTURE_2D:
         case GL_TEXTURE_3D:
-        case GL_TEXTURE_CUBE_MAP: {
-            GLuint target = parseTexTarget(cap);
+        case GL_TEXTURE_CUBE_MAP:
+        case GL_TEXTURE_RECTANGLE: {
             uint8_t activeTexture = renderer->clientState.activeTexture;
-            renderer->state.enabledTextures[activeTexture][indexOfGLTarget(target)] = state;
+            if (state) BITMASK_SET(renderer->state.enabledTextures[activeTexture], getTexTargetFlag(cap));
+            else BITMASK_UNSET(renderer->state.enabledTextures[activeTexture], getTexTargetFlag(cap));
             break;
         }
         case GL_FOG:

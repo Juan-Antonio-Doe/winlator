@@ -118,7 +118,7 @@ typedef struct GLState {
     float normal[3];
     float texCoords[MAX_TEXTURES][4];
     TexEnv texEnv[MAX_TEXTURES];
-    bool enabledTextures[MAX_TEXTURES][MAX_TEXTURE_TARGETS];
+    uint8_t enabledTextures[MAX_TEXTURES];
     bool enabledARBPrograms[2];
 
     GLenum shadeModel;
