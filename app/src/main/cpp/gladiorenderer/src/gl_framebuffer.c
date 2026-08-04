@@ -58,7 +58,7 @@ static void recreateFramebuffer(GLenum target, GLFramebuffer* framebuffer) {
 
 void GLFramebuffer_bind(GLenum target, GLuint id) {
     GLX_CONTEXT_LOCK();
-    if (id == 0) id = currentRenderer->displayBuffers[1];
+    if (id == 0) id = currentRenderer->displayBuffer;
     GLFramebuffer* framebuffer = SparseArray_get(currentRenderer->clientState.framebuffers, id);
     if (!framebuffer) framebuffer = createNamedFramebuffer(id);
 

@@ -128,8 +128,7 @@ typedef struct GLState {
 typedef struct GLRenderer {
     int contextId;
     short displaySize[2];
-    GLuint displayBuffers[2];
-    bool swapBuffers;
+    GLuint displayBuffer;
     GLuint bufferIds[VERTEX_ATTRIB_COUNT+1];
 
     GLState state;

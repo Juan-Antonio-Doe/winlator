@@ -938,9 +938,11 @@ int GLRenderer_getParamsv(GLRenderer* renderer, GLenum pname, GLenum type, void*
                     break;
             }
 
-            if (params && (pname == GL_FRAMEBUFFER_BINDING || pname == GL_DRAW_FRAMEBUFFER_BINDING || pname == GL_READ_FRAMEBUFFER_BINDING)) {
+            if (params && (pname == GL_FRAMEBUFFER_BINDING ||
+                           pname == GL_DRAW_FRAMEBUFFER_BINDING ||
+                           pname == GL_READ_FRAMEBUFFER_BINDING)) {
                 int framebuffer = *(GLint*)params;
-                if (framebuffer == renderer->displayBuffers[0] || framebuffer == renderer->displayBuffers[1]) {
+                if (framebuffer == renderer->displayBuffer) {
                     *(GLint*)params = 0;
                 }
             }
@@ -1268,26 +1270,11 @@ void* GLRenderer_getCompressedTexImage(GLRenderer* renderer, GLenum target, GLin
 }
 
 void GLRenderer_setDrawBuffer(GLRenderer* renderer, GLenum drawBuffer) {
-    if (drawBuffer == GL_FRONT_LEFT || drawBuffer == GL_FRONT_RIGHT) {
-        drawBuffer = GL_FRONT;
-    }
-    else if (drawBuffer == GL_BACK_LEFT || drawBuffer == GL_BACK_RIGHT) {
-        drawBuffer = GL_BACK;
-    }
-    else if (drawBuffer == GL_NONE || (drawBuffer >= GL_COLOR_ATTACHMENT0 && drawBuffer <= GL_COLOR_ATTACHMENT31)) {
+    if (drawBuffer == GL_NONE || (drawBuffer >= GL_COLOR_ATTACHMENT0 && drawBuffer <= GL_COLOR_ATTACHMENT31)) {
         GLFramebuffer_setDrawBuffers(1, &drawBuffer);
-        return;
     }
-
-    int framebuffer;
-    if (drawBuffer == GL_FRONT) {
-        framebuffer = renderer->displayBuffers[0];
-        renderer->swapBuffers = false;
-    }
-    else framebuffer = renderer->displayBuffers[1];
-
-    if (framebuffer != renderer->clientState.framebuffer[indexOfGLTarget(GL_FRAMEBUFFER)]) {
-        GLFramebuffer_bind(GL_FRAMEBUFFER, framebuffer);
+    else if (renderer->displayBuffer != renderer->clientState.framebuffer[indexOfGLTarget(GL_FRAMEBUFFER)]) {
+        GLFramebuffer_bind(GL_FRAMEBUFFER, renderer->displayBuffer);
     }
 }
 
