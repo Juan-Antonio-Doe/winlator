@@ -71,7 +71,6 @@ import com.winlator.widget.InputControlsView;
 import com.winlator.widget.MagnifierView;
 import com.winlator.widget.TouchpadView;
 import com.winlator.widget.XServerView;
-import com.winlator.winhandler.GamepadHandler;
 import com.winlator.winhandler.TaskManagerDialog;
 import com.winlator.winhandler.WinHandler;
 import com.winlator.xconnector.UnixSocketConfig;
@@ -713,7 +712,8 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
         else cacheId += graphicsDriver[0]+"-"+DefaultVersion.valueOf(graphicsDriver[0]);
         cacheId += "-"+graphicsDriver[1]+"-"+DefaultVersion.valueOf(graphicsDriver[1]);
 
-        boolean changed = !cacheId.equals(container.getExtra("graphicsDriver"));
+        String currentGraphicsDriver = preferences.getString("current_graphics_driver", "");
+        boolean changed = !cacheId.equals(currentGraphicsDriver);
         File rootDir = rootFS.getRootDir();
         File libDir = rootFS.getLibDir();
 
@@ -726,8 +726,7 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
             FileUtils.delete(vulkanICDDir);
             vulkanICDDir.mkdirs();
 
-            container.putExtra("graphicsDriver", cacheId);
-            container.saveData();
+            preferences.edit().putString("current_graphics_driver", cacheId).apply();
         }
 
         if (graphicsDriver[0].equals(GraphicsDrivers.TURNIP)) {
@@ -1063,10 +1062,9 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
         TarCompressorUtils.extract(TarCompressorUtils.Type.ZSTD, this, "rootfs_patches.tzst", rootDir);
         TarCompressorUtils.extract(TarCompressorUtils.Type.ZSTD, this, "pulseaudio.tzst", new File(getFilesDir(), "pulseaudio"));
         WineUtils.applySystemTweaks(this, wineInfo);
-        container.putExtra("graphicsDriver", null);
         container.putExtra("dxwrapper", null);
         container.putExtra("desktopTheme", null);
-        SettingsFragment.resetBox64Version(this);
+        SettingsFragment.resetPreferenceVersions(this);
     }
 
     public void changeFrameRatingVisibility(Window window, boolean visible) {
