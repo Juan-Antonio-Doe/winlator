@@ -11,6 +11,7 @@ import android.content.SharedPreferences;
 import android.content.pm.ServiceInfo;
 import android.os.Build;
 import android.os.Handler;
+import android.os.HandlerThread;
 import android.os.IBinder;
 import android.os.Looper;
 import android.os.PowerManager;
@@ -48,6 +49,8 @@ public class ForegroundService extends Service {
     private static final AtomicBoolean appInPipMode = new AtomicBoolean(false);
 
     private PowerManager.WakeLock wakeLock;
+    private HandlerThread screenReceiverThread;
+    private Handler screenReceiverHandler;
 
     private static volatile SharedPreferences prefs;
     private static final String PREF_USE_WAKELOCK = "enable_background_wakelock";
@@ -215,6 +218,12 @@ public class ForegroundService extends Service {
                 .getLifecycle()
                 .addObserver(appLifecycleObserver);
 
+        // Dispatch onReceive() on a dedicated background Looper and serializes
+        // SCREEN_OFF / USER_PRESENT / SCREEN_ON handling in arrival order.
+        screenReceiverThread = new HandlerThread("ForegroundService-ScreenReceiver");
+        screenReceiverThread.start();
+        screenReceiverHandler = new Handler(screenReceiverThread.getLooper());
+
         // Screen-lock detection. ACTION_SCREEN_OFF/USER_PRESENT are protected
         // broadcasts — dynamic registration only, no manifest entry needed.
         screenStateReceiver = new BroadcastReceiver() {
@@ -242,7 +251,7 @@ public class ForegroundService extends Service {
         screenFilter.addAction(Intent.ACTION_SCREEN_OFF);
         screenFilter.addAction(Intent.ACTION_SCREEN_ON);
         screenFilter.addAction(Intent.ACTION_USER_PRESENT);
-        registerReceiver(screenStateReceiver, screenFilter);
+        registerReceiver(screenStateReceiver, screenFilter, null, screenReceiverHandler);
     }
 
     @Override
