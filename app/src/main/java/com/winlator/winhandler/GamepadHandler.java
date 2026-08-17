@@ -25,6 +25,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class GamepadHandler {
     public static final byte DINPUT_MAPPER_TYPE_STANDARD = 0;
@@ -39,6 +40,7 @@ public class GamepadHandler {
     private final ArrayList<ExternalController> connectedControllers = new ArrayList<>(GAMEPAD_MAX_COUNT);
     private GamepadPlayerConfig[] gamepadPlayerConfigs;
     private short[] gamepadModelIds;
+    private final AtomicBoolean sendingState = new AtomicBoolean();
 
     public static class GamepadModel {
         public final String name;
@@ -220,14 +222,16 @@ public class GamepadHandler {
     }
 
     public void sendGamepadState(final GamepadSlot gamepadSlot) {
-        if (!winHandler.initReceived || gamepadClients.isEmpty()) return;
+        if (!winHandler.initReceived || gamepadClients.isEmpty() || sendingState.get()) return;
         final byte slot = (byte)ArrayUtils.indexOf(gamepadSlots, gamepadSlot);
         if (slot == ArrayUtils.INDEX_NOT_FOUND) return;
         final GamepadState state = gamepadSlot.getGamepadState();
         final ByteBuffer buffer = winHandler.sendData;
+        sendingState.set(true);
 
         for (final int port : gamepadClients) {
             winHandler.addAction(() -> {
+                sendingState.set(false);
                 buffer.rewind();
                 buffer.put(RequestCodes.GET_GAMEPAD_STATE);
                 buffer.put(slot);
