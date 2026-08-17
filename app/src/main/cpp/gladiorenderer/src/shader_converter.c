@@ -95,12 +95,14 @@ static struct ReservedWord reservedWords[] = {
     {"sampler1D", "sampler2D", GL_FRAGMENT_SHADER},
     {"texture2D", "texture", GL_FRAGMENT_SHADER},
     {"texture2DLod", "textureLod", GL_FRAGMENT_SHADER},
+    {"texture2DProj", "textureProj", GL_FRAGMENT_SHADER},
     {"texture2DGradARB", "textureGrad", GL_FRAGMENT_SHADER},
     {"texture2DLodOffset", "textureLodOffset", GL_FRAGMENT_SHADER},
     {"texture3D", "texture", GL_FRAGMENT_SHADER},
     {"textureCube", "texture", GL_FRAGMENT_SHADER},
     {"filter", "gd_Filter", GL_FRAGMENT_SHADER},
-    {"sample", "gd_Sample", GL_FRAGMENT_SHADER}
+    {"sample", "gd_Sample", GL_FRAGMENT_SHADER},
+    {"texture", "gd_Texture", GL_FRAGMENT_SHADER}
 };
 
 static char* allowedExtensions[] = {"GL_ARB_shader_texture_lod"};
@@ -1047,16 +1049,16 @@ static char* implicitConvertFunctionParams(ShaderCode* shaderCode, char* line) {
                     checkBuiltinMathFunctionIntParams(shaderCode, line, &i, &subwords);
                 }
                 else if (isBuiltinTextureFunction) {
-                    if (cstartswith("texture(", name) || cstartswith("textureLod(", name)) {
-                        IntArray ranges = {0};
-                        extractShaderFunctionParams(line + i, NULL, &ranges);
-                        checkBuiltinTextureFunctionParams(shaderCode, line, &i, 2, &ranges, &subwords);
-                        IntArray_clear(&ranges);
-                    }
-                    else if (cstartswith("textureProj(", name)) {
+                    if (cstartswith("textureProj", name)) {
                         IntArray ranges = {0};
                         extractShaderFunctionParams(line + i, NULL, &ranges);
                         checkBuiltinTextureFunctionParams(shaderCode, line, &i, 3, &ranges, &subwords);
+                        IntArray_clear(&ranges);
+                    }
+                    else if (cstartswith("texture", name) || cstartswith("textureLod", name)) {
+                        IntArray ranges = {0};
+                        extractShaderFunctionParams(line + i, NULL, &ranges);
+                        checkBuiltinTextureFunctionParams(shaderCode, line, &i, 2, &ranges, &subwords);
                         IntArray_clear(&ranges);
                     }
                 }
@@ -1119,6 +1121,7 @@ static char* replaceReservedWords(ShaderObject* shader, char* line) {
                 line[i] = '\0';
                 for (j = 0; j < ARRAY_SIZE(reservedWords); j++) {
                     if ((reservedWords[j].shaderType == GL_NONE || reservedWords[j].shaderType == shader->type) && strcmp(reservedWords[j].name, name) == 0) {
+                        if (strcmp(name, "texture") == 0 && !ArrayMap_get(&shader->code.variables, name)) break;
                         replace = strdup(reservedWords[j].replace);
                         break;
                     }
@@ -1291,8 +1294,8 @@ static int countMainFunctions(ShaderObject* shader) {
     return count;
 }
 
-static void checkGlobalInitializerConsts(ShaderObject* shader) {
-    for (int i = 0; i < shader->code.variables.size; i++) {
+static void injectVariableDecorations(ShaderObject* shader) {
+    for (int i = 0, location = 0; i < shader->code.variables.size; i++) {
         ShaderVariable* variable = shader->code.variables.entries[i].value;
         if (variable->scopeId > 0) continue;
 
@@ -1313,6 +1316,13 @@ static void checkGlobalInitializerConsts(ShaderObject* shader) {
                 free(oldLine);
                 variable->typeQualifier = TYPE_QUALIFIER_CONST;
             }
+        }
+        else if (shader->type == GL_FRAGMENT_SHADER && variable->typeQualifier == TYPE_QUALIFIER_OUT && variable->location == -1) {
+            char* oldLine = shader->code.lines.elements[variable->lineStart];
+            char newLine[256];
+            sprintf(newLine, "layout(location = %d) %s", location++, oldLine);
+            shader->code.lines.elements[variable->lineStart] = strdup(newLine);
+            free(oldLine);
         }
     }
 }
@@ -1339,6 +1349,7 @@ static void injectBuiltinVariables(ShaderProgram* program, ShaderObject* shader)
         insertCodeLine(shader, head++, strdup("precision highp float;"));
         insertCodeLine(shader, head++, strdup("precision highp int;"));
         insertCodeLine(shader, head++, strdup("precision highp sampler2DShadow;"));
+        insertCodeLine(shader, head++, strdup("precision highp sampler3D;"));
     }
 
     const char* prefix = shader->type == GL_VERTEX_SHADER ? "out" : "in";
@@ -1388,7 +1399,17 @@ static void injectBuiltinVariables(ShaderProgram* program, ShaderObject* shader)
         insertCodeLine(shader, head++, strjoin(' ', 2, prefix, "float gd_FogFragCoord;"));
     }
 
-    if (shader->code.flags & FLAG_BUILTIN_FRAG_COLOR) insertCodeLine(shader, head++, strdup("out vec4 gd_FragColor;"));
+    if (shader->code.flags & FLAG_BUILTIN_FRAG_COLOR) {
+        bool hasOutVariable = false;
+        for (int i = 0; i < shader->code.variables.size && !hasOutVariable; i++) {
+            ShaderVariable* variable = shader->code.variables.entries[i].value;
+            if (variable->typeQualifier == TYPE_QUALIFIER_OUT) hasOutVariable = true;
+        }
+        if (hasOutVariable) {
+            insertCodeLine(shader, head++, strdup("vec4 gd_FragColor = vec4(0.0, 0.0, 0.0, 1.0);"));
+        }
+        else insertCodeLine(shader, head++, strdup("out vec4 gd_FragColor;"));
+    }
     if (shader->code.flags & FLAG_BUILTIN_MODEL_VIEW_MATRIX) insertCodeLine(shader, head++, strdup("uniform mat4 gd_ModelViewMatrix;"));
     if (shader->code.flags & FLAG_BUILTIN_PROJECTION_MATRIX) insertCodeLine(shader, head++, strdup("uniform mat4 gd_ProjectionMatrix;"));
     if (shader->code.flags & FLAG_BUILTIN_MODEL_VIEW_PROJECTION_MATRIX) insertCodeLine(shader, head++, strdup("uniform mat4 gd_ModelViewProjectionMatrix;"));
@@ -1503,7 +1524,7 @@ void ShaderConverter_setShaderSource(GLuint shaderId, GLsizei count, ArrayBuffer
     }
 
     removeReservedBuiltinNames(shader);
-    checkGlobalInitializerConsts(shader);
+    injectVariableDecorations(shader);
     GLX_CONTEXT_UNLOCK();
 }
 
