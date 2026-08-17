@@ -673,7 +673,7 @@ void ShaderMaterial_updateUniforms(ShaderMaterial* material, GLRenderer* rendere
     }
 
     if (options->alphaTest) {
-        glUniform2f(material->location.alphaTest, renderer->state.alphaTest.func, renderer->state.alphaTest.ref);
+        glUniform2f(material->location.alphaTest, renderer->state.alphaTest.enabled ? renderer->state.alphaTest.func : GL_ALWAYS, renderer->state.alphaTest.ref);
     }
 
     if (options->fog) {
