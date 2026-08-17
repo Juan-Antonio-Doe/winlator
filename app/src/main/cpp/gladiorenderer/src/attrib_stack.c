@@ -146,8 +146,8 @@ void AttribStack_pop() {
 
     if (stack->mask & GL_TEXTURE_BIT) {
         for (int i = 0, j; i < MAX_TEXTURES; i++) {
+            glActiveTexture(GL_TEXTURE0 + i);
             for (j = 0; j < MAX_TEXTURE_TARGETS; j++) {
-                glActiveTexture(GL_TEXTURE0 + stack->activeTexture);
                 glBindTexture(getTexTargetAt(j), stack->boundTexture[i][j] ? stack->boundTexture[i][j]->id : 0);
                 currentRenderer->clientState.texture[i][j] = stack->boundTexture[i][j];
             }

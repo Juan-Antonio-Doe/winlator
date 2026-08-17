@@ -58,17 +58,35 @@ GLTexture* GLTexture_get(GLuint id) {
 
 void GLTexture_delete(GLuint id) {
     GLX_CONTEXT_LOCK();
-    GLTexture* texture = SparseArray_get(currentRenderer->clientState.textures, id);
+    GLClientState* clientState = &currentRenderer->clientState;
+    GLTexture* texture = SparseArray_get(clientState->textures, id);
     if (texture) {
         for (int i = 0, j; i < MAX_TEXTURES; i++) {
             for (j = 0; j < MAX_TEXTURE_TARGETS; j++) {
-                if (texture == currentRenderer->clientState.texture[i][j]) currentRenderer->clientState.texture[i][j] = NULL;
+                if (texture == clientState->texture[i][j]) clientState->texture[i][j] = NULL;
             }
         }
 
         glDeleteTextures(1, &texture->id);
-        SparseArray_remove(currentRenderer->clientState.textures, id);
+        SparseArray_remove(clientState->textures, id);
         free(texture);
     }
     GLX_CONTEXT_UNLOCK();
+}
+
+GLuint GLTexture_getBindingId(GLenum target) {
+    GLX_CONTEXT_LOCK();
+    GLuint bindingId = 0;
+    GLClientState* clientState = &currentRenderer->clientState;
+    GLTexture* texture = clientState->texture[clientState->activeTexture][indexOfGLTarget(target)];
+    if (texture) {
+        for (int i = 0; i < clientState->textures->size; i++) {
+            if (clientState->textures->entries[i].value == texture) {
+                bindingId = clientState->textures->entries[i].key;
+                break;
+            }
+        }
+    }
+    GLX_CONTEXT_UNLOCK();
+    return bindingId;
 }

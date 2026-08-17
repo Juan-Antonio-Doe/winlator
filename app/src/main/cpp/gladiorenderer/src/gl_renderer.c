@@ -894,14 +894,24 @@ int GLRenderer_getParamsv(GLRenderer* renderer, GLenum pname, GLenum type, void*
         case GL_TEXTURE_BINDING_2D:
         case GL_TEXTURE_BINDING_3D:
         case GL_TEXTURE_BINDING_CUBE_MAP:
-            if (params) {
-                GLTexture* texture = GLTexture_getBound(getTexTargetForBinding(pname));
-                *(GLuint*)params = texture ? texture->id : 0;
-            }
+            if (params) *(GLuint*)params = GLTexture_getBindingId(getTexTargetForBinding(pname));
             break;
-        case GL_POINT_SIZE_RANGE:
-            pname = GL_ALIASED_POINT_SIZE_RANGE;
+        case GL_TEXTURE_1D:
+        case GL_TEXTURE_2D:
+        case GL_TEXTURE_3D:
+        case GL_TEXTURE_CUBE_MAP:
+        case GL_TEXTURE_RECTANGLE: {
+            uint8_t activeTexture = renderer->clientState.activeTexture;
+            uint8_t flags = renderer->state.enabledTextures[activeTexture];
+            if (params) *(GLboolean*)params = (flags & getTexTargetFlag(pname)) ? GL_TRUE : GL_FALSE;
+            paramSize = sizeof(GLboolean);
+            break;
+        }
+        case GL_ACTIVE_TEXTURE:
+            if (params) *(GLenum*)params = GL_TEXTURE0 + renderer->clientState.activeTexture;
+            break;
         default:
+            if (pname == GL_POINT_SIZE_RANGE) pname = GL_ALIASED_POINT_SIZE_RANGE;
             if (pname >= GL_LIGHT0 && pname <= GL_LIGHT7) {
                 int index = pname - GL_LIGHT0;
                 if (params) *(GLboolean*)params = index < MAX_LIGHTS ? renderer->lights[index].enabled : 0;
@@ -999,6 +1009,14 @@ void GLRenderer_drawPixels(GLRenderer* renderer, GLsizei width, GLsizei height, 
 
     initRaster(renderer);
 
+    GLboolean oldEnabled;
+    GLRenderer_getParamsv(renderer, GL_TEXTURE_2D, GL_BOOL, &oldEnabled);
+    GLRenderer_setCapabilityState(renderer, GL_TEXTURE_2D, true, -1);
+
+    GLenum oldActiveTexture;
+    GLRenderer_getParamsv(renderer, GL_ACTIVE_TEXTURE, GL_BOOL, &oldActiveTexture);
+    GLTexture_setActiveUnit(GL_TEXTURE0);
+
     GLRaster* raster = renderer->raster;
     glBindTexture(GL_TEXTURE_2D, raster->textureId);
     glTexImage2D(GL_TEXTURE_2D, 0, internalformat, width, height, 0, format, type, pixels);
@@ -1035,6 +1053,9 @@ void GLRenderer_drawPixels(GLRenderer* renderer, GLsizei width, GLsizei height, 
 
     GLTexture* texture = GLTexture_getBound(GL_TEXTURE_2D);
     glBindTexture(GL_TEXTURE_2D, texture ? texture->id : 0);
+
+    GLTexture_setActiveUnit(oldActiveTexture);
+    GLRenderer_setCapabilityState(renderer, GL_TEXTURE_2D, oldEnabled, -1);
 }
 
 void GLRenderer_setSamplerParameter(GLRenderer* renderer, GLuint sampler, GLenum pname, GLfloat* params) {
