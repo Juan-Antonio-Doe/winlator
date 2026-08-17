@@ -1,7 +1,8 @@
 apply plugin: 'com.android.application'
 
 android {
-    compileSdk 34
+    namespace 'com.winlator'
+    compileSdk 35
 
     defaultConfig {
         applicationId 'com.winlator'
