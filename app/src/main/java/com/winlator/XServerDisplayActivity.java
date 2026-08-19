@@ -7,6 +7,7 @@ import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.res.Configuration;
 import android.os.Bundle;
 import android.view.KeyEvent;
 import android.view.Menu;
@@ -66,6 +67,7 @@ import com.winlator.inputcontrols.ExternalController;
 import com.winlator.inputcontrols.InputControlsManager;
 import com.winlator.math.Mathf;
 import com.winlator.renderer.GLRenderer;
+import com.winlator.services.ForegroundService;
 import com.winlator.widget.FrameRating;
 import com.winlator.widget.InputControlsView;
 import com.winlator.widget.MagnifierView;
@@ -142,6 +144,7 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
         AppUtils.hideSystemUI(this);
         AppUtils.keepScreenOn(this);
         setContentView(R.layout.xserver_display_activity);
+        ForegroundService.startSession(this);
 
         final PreloaderDialog preloaderDialog = new PreloaderDialog(this);
         preferences = PreferenceManager.getDefaultSharedPreferences(this);
@@ -313,10 +316,12 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
             xServerView.onResume();
             environment.onResume();
         }
+        ForegroundService.onResumeSession(this);
     }
 
     @Override
     public void onPause() {
+        ForegroundService.onPauseSession(this);
         super.onPause();
         if (environment != null && !isInPictureInPictureMode()) {
             environment.onPause();
@@ -325,9 +330,16 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
     }
 
     @Override
+    public void onPictureInPictureModeChanged(boolean isInPictureInPictureMode, Configuration newConfig) {
+        super.onPictureInPictureModeChanged(isInPictureInPictureMode, newConfig);
+        ForegroundService.setPipMode(isInPictureInPictureMode);
+    }
+
+    @Override
     protected void onDestroy() {
         winHandler.stop();
         if (environment != null) environment.stopEnvironmentComponents();
+        ForegroundService.stopSession(this);
         super.onDestroy();
     }
 
@@ -423,6 +435,7 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
             AppUtils.restartApplication(this, options);
         }
         else AppUtils.restartApplication(this);
+        ForegroundService.stopSession(this);
     }
 
     private void setupWineSystemFiles() {

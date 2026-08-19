@@ -236,6 +236,9 @@
     <string name="install_component">Instalar Componente</string>
     <string name="open_android_browser_from_wine">Abrir o navegador Android pelo Wine</string>
     <string name="use_android_clipboard_on_Wine">Usar a área de transferência do Android no Wine</string>
+    <string name="enable_background_protection">Ativar proteção em segundo plano</string>
+    <string name="enable_background_protection_tooltip">Manter contêiner ativo em segundo plano ou bloqueado, mas processos pausados.</string>
+    <string name="enable_background_wakelock_tooltip">Evite problemas ao retornar após desbloquear o dispositivo.</string>
     <string name="capture_pointer_on_external_mouse">Capturar ponteiro em mouse externo</string>
     <string name="there_are_no_items_to_download">Não há itens para baixar</string>
     <string name="enable_direct_rendering">Habilitar renderização direta</string>
@@ -290,4 +293,9 @@
     <string name="full">Completo</string>
     <string name="renderer">Renderizador</string>
     <string name="default_no_override">Padrão (Sem sobrescrita)</string>
+    <string name="fgs_notification_channel_desc">Mantém o Winlator em execução em segundo plano para que uma sessão do Wine não seja interrompida pelo gerenciamento de processos em segundo plano do Android.</string>
+    <string name="fgs_notification_content_container_background">A sessão do contentor está pausada em segundo plano</string>
+    <string name="fgs_notification_content_container_foreground">Há uma sessão de contêiner em execução</string>
+    <string name="fgs_notification_content_else">O Winlator está a executar-se em segundo plano</string>
+    <string name="enable_background_wakelock">Ativar wakelock quando o dispositivo está bloqueado</string>
 </resources>
