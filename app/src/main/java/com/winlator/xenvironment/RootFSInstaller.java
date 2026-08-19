@@ -49,7 +49,7 @@ public abstract class RootFSInstaller {
         RootFS rootFS = RootFS.find(activity);
         final File rootDir = rootFS.getRootDir();
 
-        SettingsFragment.resetBox64Version(activity);
+        SettingsFragment.resetPreferenceVersions(activity);
 
         final DownloadProgressDialog dialog = new DownloadProgressDialog(activity);
         dialog.show(R.string.installing_system_files);
