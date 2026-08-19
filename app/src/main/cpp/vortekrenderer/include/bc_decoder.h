@@ -4,7 +4,7 @@
 #define BC_DECODER_H
 
 #define BC_BLOCK 4u
-#define BC_DECODER_NUM_TASKS 4
+#define BC_DECODER_MAX_TASKS 8
 #define BC_ROUNDUP(x) (x + (-x & 3))
 #define BC_ROUNDDOWN(x) (x & ~3)
 
@@ -201,7 +201,8 @@ static inline void BCDecoder_decode(const uint8_t* src, uint8_t* dst, int width,
     const int skipWidth = BC_ROUNDUP(width) / BC_BLOCK;
     const int blockSize = bcN == 1 ? 8 : 16;
 
-    int numTasks = threadPool && height >= 128 ? MIN(BC_DECODER_NUM_TASKS, threadPool->numThreads) : 1;
+    int minTasks = height >= 256 ? BC_DECODER_MAX_TASKS : BC_DECODER_MAX_TASKS / 2;
+    int numTasks = threadPool && height >= 128 ? MIN(minTasks, threadPool->numThreads) : 1;
     BCTask* tasks = calloc(numTasks, sizeof(BCTask));
 
     int chunkHeight = BC_ROUNDDOWN(height / numTasks);
