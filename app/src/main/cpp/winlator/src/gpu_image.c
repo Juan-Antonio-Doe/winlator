@@ -27,6 +27,8 @@ int AHardwareBuffer_getFd(AHardwareBuffer* hardwareBuffer) {
 }
 
 EGLImageKHR createImageKHR(AHardwareBuffer* hardwareBuffer, int textureId) {
+    if (!hardwareBuffer) return NULL;
+
     const EGLint attribList[] = {EGL_IMAGE_PRESERVED_KHR, EGL_TRUE, EGL_NONE};
 
     AHardwareBuffer_acquire(hardwareBuffer);

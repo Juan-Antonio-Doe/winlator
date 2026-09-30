@@ -89,40 +89,44 @@ public class Drawable extends XResource {
     }
 
     public void drawImage(short srcX, short srcY, short dstX, short dstY, short width, short height, byte depth, ByteBuffer data, short totalWidth, short totalHeight) {
-        if (this.data == null) return;
+        synchronized (renderLock) {
+            if (this.data == null) return;
 
-        if (depth == 1) {
-            drawBitmap(width, height, data, this.data);
+            if (depth == 1) {
+                drawBitmap(width, height, data, this.data);
+            }
+            else if (depth == 24 || depth == 32) {
+                dstX = (short)Mathf.clamp(dstX, 0, this.width-1);
+                dstY = (short)Mathf.clamp(dstY, 0, this.height-1);
+                if ((dstX + width) > this.width) width = (short)((this.width - dstX));
+                if ((dstY + height) > this.height) height = (short)((this.height - dstY));
+
+                copyArea(srcX, srcY, dstX, dstY, width, height, totalWidth, this.getStride(), data, this.data);
+            }
+
+            this.data.rewind();
+            data.rewind();
+
+            forceUpdate();
         }
-        else if (depth == 24 || depth == 32) {
-            dstX = (short)Mathf.clamp(dstX, 0, this.width-1);
-            dstY = (short)Mathf.clamp(dstY, 0, this.height-1);
-            if ((dstX + width) > this.width) width = (short)((this.width - dstX));
-            if ((dstY + height) > this.height) height = (short)((this.height - dstY));
-
-            copyArea(srcX, srcY, dstX, dstY, width, height, totalWidth, this.getStride(), data, this.data);
-        }
-
-        this.data.rewind();
-        data.rewind();
-
-        forceUpdate();
     }
 
     public ByteBuffer getImage(short x, short y, short width, short height) {
-        ByteBuffer dstData = ByteBuffer.allocateDirect(width * height * 4).order(ByteOrder.LITTLE_ENDIAN);
-        if (this.data == null) return dstData;
+        synchronized (renderLock) {
+            ByteBuffer dstData = ByteBuffer.allocateDirect(width * height * 4).order(ByteOrder.LITTLE_ENDIAN);
+            if (this.data == null) return dstData;
 
-        x = (short)Mathf.clamp(x, 0, this.width-1);
-        y = (short)Mathf.clamp(y, 0, this.height-1);
-        if ((x + width) > this.width) width = (short)(this.width - x);
-        if ((y + height) > this.height) height = (short)(this.height - y);
+            x = (short)Mathf.clamp(x, 0, this.width-1);
+            y = (short)Mathf.clamp(y, 0, this.height-1);
+            if ((x + width) > this.width) width = (short)(this.width - x);
+            if ((y + height) > this.height) height = (short)(this.height - y);
 
-        copyArea(x, y, (short)0, (short)0, width, height, this.getStride(), width, this.data, dstData);
+            copyArea(x, y, (short)0, (short)0, width, height, this.getStride(), width, this.data, dstData);
 
-        this.data.rewind();
-        dstData.rewind();
-        return dstData;
+            this.data.rewind();
+            dstData.rewind();
+            return dstData;
+        }
     }
 
     public void copyArea(short srcX, short srcY, short dstX, short dstY, short width, short height, Drawable drawable) {
@@ -130,22 +134,24 @@ public class Drawable extends XResource {
     }
 
     public void copyArea(short srcX, short srcY, short dstX, short dstY, short width, short height, Drawable drawable, GraphicsContext.Function gcFunction) {
-        if (this.data == null || drawable.data == null) return;
+        synchronized (renderLock) {
+            if (this.data == null || drawable.data == null) return;
 
-        dstX = (short)Mathf.clamp(dstX, 0, this.width-1);
-        dstY = (short)Mathf.clamp(dstY, 0, this.height-1);
-        if ((dstX + width) > this.width) width = (short)(this.width - dstX);
-        if ((dstY + height) > this.height) height = (short)(this.height - dstY);
+            dstX = (short)Mathf.clamp(dstX, 0, this.width-1);
+            dstY = (short)Mathf.clamp(dstY, 0, this.height-1);
+            if ((dstX + width) > this.width) width = (short)(this.width - dstX);
+            if ((dstY + height) > this.height) height = (short)(this.height - dstY);
 
-        if (gcFunction == GraphicsContext.Function.COPY) {
-            copyArea(srcX, srcY, dstX, dstY, width, height, drawable.getStride(), this.getStride(), drawable.data, this.data);
+            if (gcFunction == GraphicsContext.Function.COPY) {
+                copyArea(srcX, srcY, dstX, dstY, width, height, drawable.getStride(), this.getStride(), drawable.data, this.data);
+            }
+            else copyAreaOp(srcX, srcY, dstX, dstY, width, height, drawable.getStride(), this.getStride(), drawable.data, this.data, gcFunction.ordinal());
+
+            this.data.rewind();
+            drawable.data.rewind();
+
+            forceUpdate();
         }
-        else copyAreaOp(srcX, srcY, dstX, dstY, width, height, drawable.getStride(), this.getStride(), drawable.data, this.data, gcFunction.ordinal());
-
-        this.data.rewind();
-        drawable.data.rewind();
-
-        forceUpdate();
     }
 
     public void fillColor(int color) {

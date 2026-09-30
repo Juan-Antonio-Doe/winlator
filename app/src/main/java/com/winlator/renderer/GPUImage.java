@@ -40,7 +40,8 @@ public class GPUImage extends Texture {
     public void allocateTexture(short width, short height, ByteBuffer data) {
         if (isAllocated()) return;
         super.allocateTexture(width, height, null);
-        imageKHRPtr = createImageKHR(hardwareBufferPtr, textureId);
+        if (hardwareBufferPtr != 0)
+            imageKHRPtr = createImageKHR(hardwareBufferPtr, textureId);
     }
 
     @Override
@@ -87,8 +88,12 @@ public class GPUImage extends Texture {
 
     public static GPUImage createOrObtain(XServer xServer, Drawable drawable, boolean cpuAccess, boolean useHALPixelFormatBGRA8888) {
         final Texture texture = drawable.getTexture();
-        if (!(texture instanceof GPUImage)) {
-            xServer.getRenderer().xServerView.queueEvent(texture::destroy);
+        if (!(texture instanceof GPUImage) || texture.getOwner() != drawable || texture.getOwner().width != drawable.width || texture.getOwner().height != drawable.height) {
+            if (texture != null) {
+                if (xServer.getRenderer() != null && xServer.getRenderer().xServerView != null)
+                    xServer.getRenderer().xServerView.queueEvent(texture::destroy);
+                else texture.destroy();
+            }
             GPUImage gpuImage = new GPUImage(drawable, cpuAccess, useHALPixelFormatBGRA8888);
             drawable.setTexture(gpuImage);
             return gpuImage;

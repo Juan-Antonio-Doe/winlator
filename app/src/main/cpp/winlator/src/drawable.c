@@ -94,21 +94,36 @@ Java_com_winlator_xserver_Drawable_copyArea(JNIEnv *env, jclass obj, jshort srcX
     uint8_t *srcDataAddr = (*env)->GetDirectBufferAddress(env, srcData);
     uint8_t *dstDataAddr = (*env)->GetDirectBufferAddress(env, dstData);
 
-    srcDataAddr += (srcX + srcY * srcStride) * 4;
-    dstDataAddr += (dstX + dstY * dstStride) * 4;
+    if (!srcDataAddr || !dstDataAddr) return;
+
+    jlong srcCapacity = (*env)->GetDirectBufferCapacity(env, srcData);
+    jlong dstCapacity = (*env)->GetDirectBufferCapacity(env, dstData);
+
+    jlong srcOffset = (srcX + srcY * (jlong)srcStride) * 4;
+    jlong dstOffset = (dstX + dstY * (jlong)dstStride) * 4;
+
+    if (srcOffset < 0 || dstOffset < 0) return;
+
+    srcDataAddr += srcOffset;
+    dstDataAddr += dstOffset;
 
     if (width == srcStride && width == dstStride) {
-        memcpy(dstDataAddr, srcDataAddr, width * height * 4);
+        jlong totalBytes = (jlong)width * height * 4;
+        if (srcOffset + totalBytes > srcCapacity || dstOffset + totalBytes > dstCapacity) return;
+        memcpy(dstDataAddr, srcDataAddr, totalBytes);
     }
     else {
-        width *= 4;
-        srcStride *= 4;
-        dstStride *= 4;
+        jlong rowBytes = (jlong)width * 4;
+        jlong srcStrideBytes = (jlong)srcStride * 4;
+        jlong dstStrideBytes = (jlong)dstStride * 4;
 
         for (int16_t y = 0; y < height; y++) {
-            memcpy(dstDataAddr, srcDataAddr, width);
-            srcDataAddr += srcStride;
-            dstDataAddr += dstStride;
+            jlong curSrcOffset = srcOffset + y * srcStrideBytes;
+            jlong curDstOffset = dstOffset + y * dstStrideBytes;
+            if (curSrcOffset + rowBytes > srcCapacity || curDstOffset + rowBytes > dstCapacity) break;
+            memcpy(dstDataAddr, srcDataAddr, rowBytes);
+            srcDataAddr += srcStrideBytes;
+            dstDataAddr += dstStrideBytes;
         }
     }
 }
@@ -119,14 +134,21 @@ Java_com_winlator_xserver_Drawable_copyAreaOp(JNIEnv *env, jclass obj, jshort sr
                                               jshort width, jshort height, jshort srcStride,
                                               jshort dstStride, jobject srcData,
                                               jobject dstData, int gcFunction) {
-    int i, j, srcColor, dstColor;
     uint8_t *srcDataAddr = (*env)->GetDirectBufferAddress(env, srcData);
     uint8_t *dstDataAddr = (*env)->GetDirectBufferAddress(env, dstData);
 
+    if (!srcDataAddr || !dstDataAddr) return;
+
+    jlong srcCapacity = (*env)->GetDirectBufferCapacity(env, srcData);
+    jlong dstCapacity = (*env)->GetDirectBufferCapacity(env, dstData);
+
+    int i, j, srcColor, dstColor;
     for (int16_t x, y = 0; y < height; y++) {
         for (x = 0; x < width; x++) {
             i = (x + srcX + (y + srcY) * srcStride) * 4;
             j = (x + dstX + (y + dstY) * dstStride) * 4;
+            if (i < 0 || i + 3 >= srcCapacity || j < 0 || j + 3 >= dstCapacity) continue;
+
             srcColor = (srcDataAddr[i+0] << 16) | (srcDataAddr[i+1] << 8) | srcDataAddr[i+2];
             dstColor = (dstDataAddr[j+0] << 16) | (dstDataAddr[j+1] << 8) | dstDataAddr[j+2];
 
